@@ -1,0 +1,6 @@
+# App — informações da API (Fase 3)
+# Escrito no `php-laravel` (o v1 tem a rota, mas o caso não existia nos .http herdados).
+
+### GET / — info do app
+# Esperado: 200, corpo {"appname":"DevFinder"} (schema AppInfo). Sem auth.
+GET {{baseUrl}}/

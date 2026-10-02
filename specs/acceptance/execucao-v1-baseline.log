@@ -1,0 +1,96 @@
+# Baseline do v1 (php-codei, commit 3229c4c) — execução dos .http de specs/acceptance
+# Data: 2026-10-02. Ambiente `v1` = http://localhost:8081/v1 (Docker Compose do v1, MySQL 8.4 local).
+#
+# Como foi gerado (reproduzível):
+#   1. git archive 3229c4c do php-codei numa pasta temporária (o php-codei em si não foi tocado) e
+#      `cp .env.example .env`. NÃO usar o .env do php-codei: ele aponta database.defaultGroup para o
+#      TiDB Cloud de produção. A cópia temporária usa só o MySQL do Docker.
+#   2. docker compose up -d --build; php spark migrate --all; php spark db:seed AcceptanceSeeder
+#   3. tokens locais com `php spark token:mint` (dev01 e um username inexistente); arquivo
+#      http-client.private.env.json, ignorado pelo git
+#   4. npx httpyac send app auth channels description devs ingestion reactions videos --env v1 --all
+#      (search.http fora: o v1 não tem a rota). Banco recém-semeado, execução única, ordem alfabética dos arquivos.
+#
+# Saída resumida de propósito: o bruto tinha ~11 mil linhas (corpos HTML do GitHub, tokens) e não é evidência útil.
+# Limites desta evidência: só o STATUS HTTP foi registrado. O shape dos corpos NÃO foi validado contra o OpenAPI
+# (pendente). A comparação automática com o `# Esperado:` dos .http cobre só os 20 blocos cujo comentário traz o
+# status em formato simples; os outros 42 não foram verificados por máquina.
+
+# Total: 62 requisições com resposta final. Por status: 200=40, 201=5, 302=3, 400=5, 401=5, 404=2, 409=1, 500=1
+
+# status  método  caminho  — caso
+200  GET    /  — GET / — info do app
+302  GET    https://github.com/login... (redirect seguido)  — GET /auth/github — só a parte do redirect, sem seguir
+302  GET    https://github.com/login... (redirect seguido)  — GET /auth/github — só a parte do redirect, sem seguir
+200  GET    https://github.com/login... (redirect seguido)  — GET /auth/github — só a parte do redirect, sem seguir
+302  GET    http://localhost:3000/login  — GET /auth/github/callback — sem `code` (caminho de falha, ex.: usuário negou no GitHub)
+401  GET    /me  — GET /me — sem token
+401  GET    /me  — GET /me — token malformado
+200  GET    /me  — GET /me — token válido
+401  GET    /me  — GET /me — token de username inexistente
+200  GET    /channels  — GET /channels
+200  GET    /channels/Canal%20Alpha  — GET /channels/{searchQuery} — encontrado por nome
+200  GET    /channels/nao-existe  — GET /channels/{searchQuery} — não encontrado
+201  POST   /channels  — POST /channels — canal novo, category com emoji (achado: emoji removido, espaço mantido)
+200  POST   /channels  — POST /channels — mesmo nome (dedup por "contém"), caminho de update
+201  POST   /channels  — POST /channels — com userGithub (cria/reaproveita o Dev associado)
+200  GET    /description/feed  — GET /description/feed
+200  GET    /description/category  — GET /description/category
+200  GET    /devs?page=1  — GET /devs — page 1 (fixture sintética da Fase 3: 35 devs, ver AcceptanceDevSeeder)
+200  GET    /devs?page=2  — GET /devs — page 2 (resto: 35 - 30 = 5, dev05..dev01)
+200  GET    /devs  — GET /devs — sem page (default = 1, mesmo resultado do primeiro caso)
+200  GET    /devs?page=1  — GET /devs — personalizado (auth, Fase 4)
+200  GET    /devs?page=1  — GET /devs — token inválido em rota opcional (não deve bloquear)
+200  GET    /devs/dev01  — GET /devs/{username} — encontrado (fixture sintética, ver AcceptanceReactionSeeder)
+200  GET    /devs/nobody  — GET /devs/{username} — não encontrado
+401  POST   /devs  — POST /devs — sem token
+201  POST   /devs  — POST /devs — dev já existente (idempotente)
+201  POST   /devs  — POST /devs — dev novo, username real do GitHub (profile público completa nome/bio/avatar)
+500  POST   /devs  — POST /devs — username que não existe no GitHub (achado real desta fase)
+401  POST   /video/refresh  — POST /video/refresh — sem token
+200  POST   /video/refresh  — POST /video/refresh — record ausente/vazio, com token
+200  POST   /video/refresh  — POST /video/refresh — lote misto (novo / duplicado / canal inexistente), com token
+400  POST   /likes/devs/no-such-dev-zzz  — POST /likes/devs/{username} — alvo inexistente
+200  POST   /likes/devs/dev04  — POST /likes/devs/{username} — alvo existente (dev04, fixture sintética)
+200  POST   /likes/devs/dev01  — POST /likes/devs/{username} — o próprio autenticado (auto-like)
+200  GET    /likes/devs  — GET /likes/devs — devs no `likes` do autenticado
+200  DELETE /likes/devs/dev04  — DELETE /likes/devs/{username} — remove o like
+400  POST   /dislikes/devs/no-such-dev-zzz  — POST /dislikes/devs/{username} — alvo inexistente
+200  POST   /dislikes/devs/dev05  — POST /dislikes/devs/{username} — alvo existente (dev05)
+200  GET    /dislikes/devs  — GET /dislikes/devs
+200  DELETE /dislikes/devs/dev05  — DELETE /dislikes/devs/{username} — remove o dislike
+400  POST   /likes/channels/no-such-channel-zzz  — POST /likes/channels/{name} — alvo inexistente
+200  POST   /likes/channels/Canal%20Zeta  — POST /likes/channels/{name} — follow de um canal real da fixture (Canal Zeta)
+200  DELETE /likes/channels/Canal%20Zeta  — DELETE /likes/channels/{name} — unfollow
+400  POST   /dislikes/channels/no-such-channel-zzz  — POST /dislikes/channels/{name} — alvo inexistente
+200  POST   /dislikes/channels/Canal%20Zeta  — POST /dislikes/channels/{name} — ignore de um canal real da fixture (Canal Zeta)
+200  DELETE /dislikes/channels/Canal%20Zeta  — DELETE /dislikes/channels/{name} — un-ignore
+200  GET    /feed/trending?page=1  — GET /feed/trending — page 1 (fixture sintética: 55 vídeos, ver AcceptanceVideoSeeder)
+200  GET    /feed/trending?page=2  — GET /feed/trending — page 2 (resto: 55 - 30 = 25 — 5 de Beta + 20 de Alpha)
+200  GET    /feed/trending?page=99  — GET /feed/trending — page além do fim
+200  GET    /feed/trending?page=1&user=dev01  — GET /feed/trending — personalizado via `?user=` (Fase 4)
+200  GET    /feed/trending?page=1  — GET /feed/trending — personalizado via Bearer token
+200  GET    /feed/channel?channel_name=Canal%20Beta&page=1  — GET /feed/channel?channel_name= — page 1 (Canal Beta, 35 vídeos > 1 página)
+200  GET    /feed/channel?channel_name=Canal%20Beta&page=2  — GET /feed/channel?channel_name= — page 2 (resto: 35 - 30 = 5)
+200  GET    /feed/channel?channel_name=Canal%20Alpha  — GET /feed/channel?channel_name= — canal com 1 página só (Canal Alpha, 20 vídeos)
+200  GET    /feed/channel?channel_name=NaoExiste  — GET /feed/channel?channel_name= — canal inexistente
+404  GET    /feed/subscriptions  — GET /feed/subscriptions — sem token
+404  GET    /feed/subscriptions?page=1  — GET /feed/subscriptions — autenticado
+200  GET    /video/vidalpha01  — GET /video/{idYoutubeWatch} — encontrado (fixture sintética, ver AcceptanceVideoSeeder)
+200  GET    /video/does-not-exist  — GET /video/{idYoutubeWatch} — não encontrado
+400  POST   /video  — POST /video — canal desconhecido
+201  POST   /video  — POST /video — canal real da fixture (Canal Alpha), vídeo novo, sem thumbnail
+409  POST   /video  — POST /video — mesma url de novo
+
+# Divergências do status esperado nos .http (conferido por script nos 20 blocos parseáveis):
+#   GET /feed/subscriptions (sem token)    esperado 401 -> obtido 404
+#   GET /feed/subscriptions (autenticado)  esperado 200 -> obtido 404
+#   Causa: a rota nunca foi implementada no v1 (ver specs/auditoria-original.md, A1). Já conhecido.
+#
+# Observações:
+#   - POST /devs com username inexistente no GitHub devolve 500: é o comportamento ESPERADO pelo próprio caso do v1
+#     (limitação aceita lá). No php-laravel isso é candidato a divergência (502 ou 404 com erro tipado), ver A13.
+#   - GET /auth/github seguiu o redirect até github.com/login (client_id vazio: sem OAuth App configurado). O caso
+#     diz "sem seguir", mas o httpyac segue por padrão; no php-laravel usar `# @no-redirect`.
+#   - A linha 200 de github.com/login é resposta do GitHub, não do v1 (entra na contagem de 200).
+#   - As escritas (201, 409, 400) alteraram o banco local do v1; refazer migrate:refresh + seed antes de repetir.

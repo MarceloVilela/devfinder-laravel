@@ -1,0 +1,78 @@
+# Auth (GitHub OAuth + JWT) — Fase 4
+# Condensado de: auth-github.http, me.http (origem: ../php-codei/specs/acceptance, commit 3229c4c)
+
+### auth-github (fluxo GitHub OAuth completo, Fase 4 — specs/fase-4-endpoints-auth.md)
+#
+# Não é testável só com REST Client: o fluxo real envolve um redirect de browser pro
+# GitHub (tela de autorização) e volta com um `code` de uso único. Passos manuais:
+#
+# 1. Preencher `.env` (raiz do projeto): `auth.githubClientId`, `auth.githubClientSecret`
+#    (de um GitHub OAuth App real, ver github.com/settings/developers — Authorization
+#    callback URL = {baseUrl sem /v1}/v1/auth/github/callback), `auth.jwtSecret`,
+#    `auth.webURL` (URL do devfinder-next).
+# 2. `docker compose up` (PHP-FPM + Nginx + MySQL, ver plan.md Fase 2).
+# 3. Abrir {{baseUrl}}/auth/github no browser (não dá pra seguir redirect via REST Client)
+#    — loga no GitHub, autoriza o OAuth App.
+# 4. GitHub redireciona pro callback, que troca `code` por token e redireciona pro front
+#    (`auth.webURL/login?token=...`). Copiar o `token` da URL final.
+# 5. Usar esse token em specs/acceptance/me.http (`{{authToken}}`) pra confirmar
+#    `GET /me` funcionando ponta-a-ponta.
+#
+# **Não exercitado nesta execução** (2026-08-24): sem GitHub OAuth App real configurado
+# neste ambiente — mesma pendência já documentada em
+# `../../../serverless/specs/fase-4-auth.md`. Mecanismo (`GithubOAuth::exchangeCodeForToken`/
+# `fetchProfile`) verificado só por leitura de código + teste isolado de
+# `DevModel::findOrCreate` (ver caso de teste abaixo, fora deste arquivo).
+#
+# Os dois casos abaixo SÃO testáveis via REST Client (não dependem do browser) — validados
+# de verdade contra o Docker Compose local em 2026-08-24:
+
+### GET /auth/github — só a parte do redirect, sem seguir
+# Confirmado: 302, Location = https://github.com/login/oauth/authorize?client_id=&redirect_uri=...
+# — sem `scope` (paridade com o `passport-github` original, que não configurava nenhum;
+# perfil público não precisa de escopo). `client_id` vazio no ambiente local porque
+# `auth.githubClientId` não está preenchido (não temos GitHub OAuth App real aqui).
+GET {{baseUrl}}/auth/github
+
+### GET /auth/github/callback — sem `code` (caminho de falha, ex.: usuário negou no GitHub)
+# Confirmado: 302, Location = <auth.webURL>/login (sem `?token=`). Diferente do
+# `failureRedirect: '/login'` original, que redirecionava pra um `/login` relativo ao
+# domínio da própria API (bug sem consumidor real, corrigido — não replicado).
+GET {{baseUrl}}/auth/github/callback
+
+### GET /me — sem token
+# Confirmado: 401, {"error":"Token not provided."} — mesma mensagem do `auth.ts` original.
+GET {{baseUrl}}/me
+
+### GET /me — token malformado
+# Confirmado: 401, {"error":"Token invalid."} — mesma mensagem do `auth.ts` original.
+GET {{baseUrl}}/me
+Authorization: Bearer garbage.invalid.token
+
+### GET /me — token válido
+# `{{authToken}}` hoje é um token REAL — login de verdade no GitHub (ver
+# fase-4-endpoints-auth.md, "Verificação humana"), não um JWT sintético. Confirmado: 200,
+# corpo do Dev com dado real do GitHub (_id=37, user="marcelovilela", nome e avatar reais).
+#
+# Pra gerar um token sintético em vez de logar de verdade (ex.: pra testar contra a fixture
+# determinística — dev01 tem reações conhecidas, ver AcceptanceReactionSeeder), usar
+# firebase/php-jwt direto (payload { username, iat, exp }, HS256, secreto = auth.jwtSecret do
+# .env, SEM o truque `hex2bin:` — achado real: esse prefixo só é decodificado magicamente
+# pelo `Config\Encryption`, não é um padrão genérico do CI4 pra qualquer config; usar o valor
+# puro):
+#   php -r "require 'vendor/autoload.php'; use Firebase\JWT\JWT; \
+#     echo JWT::encode(['username'=>'dev01','iat'=>time(),'exp'=>time()+604800], \
+#     '<valor de auth.jwtSecret no .env>', 'HS256');"
+GET {{baseUrl}}/me
+Authorization: Bearer {{authToken}}
+
+### GET /me — token de username inexistente
+# Decisão desta fase (diferente do original): 401 {"error":"Token invalid."}, NÃO 400
+# {"error":"DevProfile not exists"} como o `ProfileController.show` original. Motivo:
+# `RequiredAuthFilter` já resolve o Dev pelo `username` do token pra popular o AuthContext
+# (usado por outras rotas também, não só /me) — se o Dev não existe, trata como token
+# inválido em vez de deixar passar pro Controller pra um segundo tipo de erro. Efeito
+# prático pro frontend é igual ou melhor: `devfinder-next` só reage a 401 (interceptor de
+# "sessão expirada" em services/api.ts) — um 400 aqui ficaria como rejection não tratada.
+GET {{baseUrl}}/me
+Authorization: Bearer {{ghostAuthToken}}
