@@ -1,0 +1,121 @@
+# Videos e feeds — leitura (Fase 3) e escrita (Fase 5)
+# Condensado de: feed-trending.http, feed-channel.http, feed-subscriptions.http, video-show.http, video-store.http (origem: ../php-codei/specs/acceptance, commit 3229c4c)
+
+### GET /feed/trending — page 1 (fixture sintética: 55 vídeos, ver AcceptanceVideoSeeder)
+# Esperado: 200, corpo {docs, total: 55, itemsPerPage: 30}, docs.length = 30, ordenado por
+# created_at DESC. Os 20 vídeos de "Canal Alpha" foram inseridos antes dos 35 de "Canal
+# Beta" — então a página 1 inteira (30 itens) é só Beta (mais recentes).
+GET {{baseUrl}}/feed/trending?page=1
+
+### GET /feed/trending — page 2 (resto: 55 - 30 = 25 — 5 de Beta + 20 de Alpha)
+GET {{baseUrl}}/feed/trending?page=2
+
+### GET /feed/trending — page além do fim
+# Esperado real (achado rodando de verdade, diferente da suposição original de "docs vazio"):
+# o `Pager` nativo do CI4 faz *clamp* pra última página válida — `?page=99` devolve os
+# MESMOS 25 docs da página 2, não um array vazio (`total` continua correto: 55). Comportamento
+# documentado desde o CHANGELOG 4.0.3 do framework, não é bug. Decisão desta fase: manter o
+# comportamento nativo do Pager (prioridade "seguir os padrões do CodeIgniter") em vez de
+# reimplementar LIMIT/OFFSET manual só pra replicar o Mongo — a UI real
+# (`devfinder-next/src/components/Paginate`) nunca constrói link pra uma página além do total
+# calculado, então esse caso só existe pra edição manual de URL, e devolver a última página
+# válida é um comportamento defensável (arguavelmente melhor que uma tela vazia).
+GET {{baseUrl}}/feed/trending?page=99
+
+### GET /feed/trending — personalizado via `?user=` (Fase 4)
+# Confirmado: 200, total: 20 — `dev01` ignora "Canal Beta" (35 vídeos, AcceptanceReactionSeeder),
+# sobram só os 20 de "Canal Alpha". `?user=` não é autenticação, é identificação explícita
+# sem token — preservado por paridade com `TrendingController.index` original (achado #9 de
+# `../../../serverless/specs/fase-4-auth.md`, recomendação já confirmada aqui).
+GET {{baseUrl}}/feed/trending?page=1&user=dev01
+
+### GET /feed/trending — personalizado via Bearer token
+# `{{authToken}}` hoje é um token real (login de verdade no GitHub, não o `dev01` sintético
+# do caso acima) — `marcelovilela` não ignora nenhum canal, então o resultado é igual ao
+# anônimo: total 55, não 20. Pra reproduzir o caso equivalente ao `?user=dev01` acima, trocar
+# `authToken` por um token de `dev01` (ignora "Canal Beta", AcceptanceReactionSeeder).
+GET {{baseUrl}}/feed/trending?page=1
+Authorization: Bearer {{authToken}}
+
+### GET /feed/channel?channel_name= — page 1 (Canal Beta, 35 vídeos > 1 página)
+# Esperado: 200, {docs, total: 35, itemsPerPage: 30}, docs.length = 30.
+GET {{baseUrl}}/feed/channel?channel_name=Canal%20Beta&page=1
+
+### GET /feed/channel?channel_name= — page 2 (resto: 35 - 30 = 5)
+GET {{baseUrl}}/feed/channel?channel_name=Canal%20Beta&page=2
+
+### GET /feed/channel?channel_name= — canal com 1 página só (Canal Alpha, 20 vídeos)
+GET {{baseUrl}}/feed/channel?channel_name=Canal%20Alpha
+
+### GET /feed/channel?channel_name= — canal inexistente
+# Esperado: 200, {docs: [], total: 0, itemsPerPage: 30} — não propaga erro (diferente do
+# `VideoController.index` original, que quebraria tentando ler `channel.link` de `null`; não
+# é comportamento a preservar).
+GET {{baseUrl}}/feed/channel?channel_name=NaoExiste
+
+### GET /feed/subscriptions — sem token
+# Esperado: 401 (requiredAuthorizer, rota nao tem branch anonimo diferente de /feed/trending).
+GET {{baseUrl}}/feed/subscriptions
+
+### GET /feed/subscriptions — autenticado
+# Esperado: 200, {docs, total, itemsPerPage}, docs so de videos de canais em Dev.follow do
+# autenticado (fan-out N Query GSI1, decisao #4 de fase-1-data-model.md), mais recentes
+# primeiro.
+GET {{baseUrl}}/feed/subscriptions?page=1
+Authorization: Bearer {{authToken}}
+
+### GET /video/{idYoutubeWatch} — encontrado (fixture sintética, ver AcceptanceVideoSeeder)
+# Esperado: 200, corpo = Video serializado. `_id` é o id numérico do vídeo; `channel_id` é o
+# id numérico do canal (não um slug — mesma decisão de `channels._id`, ver
+# specs/fase-1-data-model.md). `channel`/`channel_url` reconstruídos via JOIN com `channels`
+# (não são coluna própria — Fase 1 já tinha decidido isso, confirmado aqui na implementação).
+GET {{baseUrl}}/video/vidalpha01
+
+### GET /video/{idYoutubeWatch} — não encontrado
+# Esperado: 200 (não 404) + corpo `null` — paridade com `Video.findOne` do Mongo original.
+GET {{baseUrl}}/video/does-not-exist
+
+### POST /video — canal desconhecido
+# Confirmado: 400, payload de erro completo (errorMessage/title/url/channel/channel_url/
+# thumbnail) — paridade com `VideoController.store` original.
+POST {{baseUrl}}/video
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "Video de teste",
+  "url": "https://www.youtube.com/watch?v=zzzTESTID001",
+  "channel": "Canal Que Nao Existe",
+  "channel_url": "https://www.youtube.com/channel/UCNAOEXISTE"
+}
+
+### POST /video — canal real da fixture (Canal Alpha), vídeo novo, sem thumbnail
+# Confirmado: 201, thumbnail gerada a partir do id extraído da url
+# (`https://i.ytimg.com/vi/zzzTESTID001/hqdefault.jpg`).
+#
+# Nota de repetibilidade: rodar este arquivo duas vezes seguidas sem recriar o banco faz este
+# caso virar 409 (o vídeo já existe) — mesma nota de `channels-store.http`, esperado.
+POST {{baseUrl}}/video
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "Video de teste Fase 5",
+  "url": "https://www.youtube.com/watch?v=zzzTESTID001",
+  "channel": "Canal Alpha",
+  "channel_url": "https://youtube.com/alpha"
+}
+
+### POST /video — mesma url de novo
+# Confirmado: 409, {"errorMessage": "video(...) already exists", ...vídeo existente
+# serializado completo, com channel/channel_url via JOIN}.
+POST {{baseUrl}}/video
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "Video de teste Fase 5 duplicado",
+  "url": "https://www.youtube.com/watch?v=zzzTESTID001",
+  "channel": "Canal Alpha",
+  "channel_url": "https://youtube.com/alpha"
+}

@@ -1,0 +1,75 @@
+# Ingestão em lote (Fase 6)
+# Condensado de: video-refresh.http, video-refresh-http.http (origem: ../php-codei/specs/acceptance, commit 3229c4c)
+
+### video:refresh (comando `spark` agendado via cron, sem HTTP publico — ver plan.md Fase 6)
+#
+# Nao e uma rota HTTP (Command CodeIgniter, App\Commands\VideoRefresh, rodado por crontab na
+# VM do deploy real, nao um Controller) — testado via `php spark`, nao curl/REST Client.
+# Diferente do plano original de fixture local: como as credenciais reais do bin
+# (videoRefresh.jsonbinApiKey/jsonbinIdSubs no .env, mesmo bin usado pelo devfinder-api
+# original) ja estavam disponiveis, o comando busca sempre do JSONBin.io real — sem flag de
+# fixture. O bin real cobre os mesmos 3 caminhos do VideoRefreshController original
+# (../../devfinder-api): video novo com canal resolvido, video cuja URL ja existe na
+# fixture, candidato cujo canal nao resolve por nome nem link/alternative_link. (No `php-laravel` o comando
+# le uma fixture congelada e sintetica, nunca o JSONBin real: ver `../dataset-de-paridade.md`.)
+#
+# Comando: docker compose exec app php spark video:refresh
+#
+# Esperado (stdout): "JSONBin: N candidato(s) encontrado(s)." seguido de
+# "Adicionados: X | Ja existiam: Y | Erros: Z", e a lista de errorMessage de cada erro.
+# Ver specs/acceptance/execucao-fase-6.log para a saida real capturada.
+
+### POST /video/refresh — sem token
+# Esperado: 401 (corpo de erro definido na Fase 4 — ver me.http).
+POST {{baseUrl}}/video/refresh
+Content-Type: application/json
+
+{ "record": [] }
+
+### POST /video/refresh — record ausente/vazio, com token
+# Esperado: 200, {videosAdded: [], videosFounded: [], errors: []} — resposta vazia, nao erro.
+POST {{baseUrl}}/video/refresh
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{}
+
+### POST /video/refresh — lote misto (novo / duplicado / canal inexistente), com token
+# Candidatos no schema `AddVideo` de fase-0-openapi.yaml (`channel`, nao `channel_name` —
+# App\Commands\VideoRefresh normaliza esse campo na borda antes de chamar o mesmo
+# App\Libraries\VideoIngestor::ingest() que esta rota usa; mesma distincao de formato ja
+# documentada em ../../serverless/specs/fase-6-ingestao-lote.md, "Descoberta que orienta o
+# desenho"). Esperado: 200, videosAdded com 1 item novo (channel_id do "Canal Alpha" da fixture
+# sintetica), videosFounded com vidalpha01 (ja existe na fixture), errors com o candidato de canal
+# inexistente (mesmo errorMessage de POST /video / video:refresh agendado).
+# Reescrito no `php-laravel` (2026-10-02): o original usava um canal e um video REAIS de terceiros do
+# dump, que nao podem ser versionados.
+POST {{baseUrl}}/video/refresh
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "record": [
+    {
+      "title": "Video novo de teste HTTP — Canal Alpha",
+      "url": "https://www.youtube.com/watch?v=HTTPNEWVIDEO1",
+      "channel": "Canal Alpha",
+      "channel_url": "https://youtube.com/alpha",
+      "thumbnail": "https://img.youtube.com/vi/HTTPNEWVIDEO1/hqdefault.jpg"
+    },
+    {
+      "title": "Vídeo Alpha 01",
+      "url": "https://www.youtube.com/watch?v=vidalpha01",
+      "channel": "Canal Alpha",
+      "channel_url": "https://youtube.com/alpha",
+      "thumbnail": "https://i.ytimg.com/vi/vidalpha01/hqdefault.jpg"
+    },
+    {
+      "title": "Video de canal inexistente HTTP",
+      "url": "https://www.youtube.com/watch?v=DOESNOTMATTERHTTP",
+      "channel": "Canal Inexistente XYZ",
+      "channel_url": "https://www.youtube.com/canal-inexistente",
+      "thumbnail": ""
+    }
+  ]
+}

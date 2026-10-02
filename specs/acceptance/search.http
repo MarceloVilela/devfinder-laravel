@@ -1,0 +1,37 @@
+# Search — Fase 3 (D-1 em ../auditoria-original.md)
+# Escrito no `php-laravel`: o v1 NÃO tem esta rota (404); o oráculo é o `devfinder-api`
+# (src/controllers/Search/SearchController.ts) e o contrato. Roda só contra `local` e `real`,
+# não contra `v1`. Fixture: a mesma da Fase 3 (canal "Canal Alpha", vídeo `vidalpha01`).
+
+### GET /search — termo que casa canal e vídeo
+# Esperado: 200, array (ArrayOfSearchResult) de {value, label, type}; type ∈ {channel, video};
+# contém "Canal Alpha" (type channel) e o vídeo cujo título contém "Alpha" (type video).
+# `value` URL-encoded (encodeURI), como no original.
+GET {{baseUrl}}/search?q=Alpha
+
+### GET /search — sem resultado
+# Esperado: 200, [] (nunca 404).
+GET {{baseUrl}}/search?q=zzzz-nao-existe
+
+### GET /search — sem `q` (divergência D-1)
+# Esperado: 422, {"error":"...","errors":{"q":[...]}}. O original buscava por "undefined".
+GET {{baseUrl}}/search
+
+### GET /search — metacaracteres de regex tratados como texto (divergência D-1)
+# O original faz `new RegExp(q)`: este termo trava ou casa tudo (ReDoS). Esperado: 200, [],
+# resposta em tempo normal (< 1 s), sem erro 500.
+GET {{baseUrl}}/search?q=(a%2B)%2B%24
+
+### GET /search — curinga de LIKE tratado como texto (divergência D-1)
+# `%` e `_` devem casar literalmente. Esperado: 200, [] na fixture (nenhum título/nome os contém),
+# e NÃO a lista inteira.
+GET {{baseUrl}}/search?q=%25
+
+### GET /search — termo longo
+# Esperado: 200 com [] ou 422 (limite de tamanho definido na spec da Fase 3); nunca 500.
+GET {{baseUrl}}/search?q=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+### GET /search — autenticado (auth opcional)
+# Esperado: 200, mesmo shape (token opcional não muda o contrato).
+GET {{baseUrl}}/search?q=Alpha
+Authorization: Bearer {{authToken}}

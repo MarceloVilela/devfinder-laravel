@@ -1,0 +1,81 @@
+# Devs — leitura (Fase 3) e escrita (Fase 5)
+# Condensado de: devs-index.http, dev-show.http, devs-store.http (origem: ../php-codei/specs/acceptance, commit 3229c4c)
+
+### GET /devs — page 1 (fixture sintética da Fase 3: 35 devs, ver AcceptanceDevSeeder)
+# Esperado: 200, corpo {docs, total: 35, itemsPerPage: 30}, docs.length = 30. Ordenado por
+# created_at DESC — dev35 primeiro (mais recente), dev06 último da página.
+GET {{baseUrl}}/devs?page=1
+
+### GET /devs — page 2 (resto: 35 - 30 = 5, dev05..dev01)
+GET {{baseUrl}}/devs?page=2
+
+### GET /devs — sem page (default = 1, mesmo resultado do primeiro caso)
+GET {{baseUrl}}/devs
+
+### GET /devs — personalizado (auth, Fase 4)
+# `{{authToken}}` hoje é um token real (login de verdade no GitHub, ver
+# fase-4-endpoints-auth.md, "Verificação humana") — não o `dev01` sintético. `marcelovilela`
+# não tem like/dislike (dev sem reações), então só exclui a si mesmo: total 35 (36 devs no
+# banco — 35 da fixture + marcelovilela — menos o próprio autenticado).
+# Pra testar exclusão de likes/dislikes de verdade (equivalente ao `$nin` do Mongo original),
+# trocar `authToken` por um token de `dev01` (tem like em dev02, dislike em dev03,
+# AcceptanceReactionSeeder) — nesse caso o total esperado é 32.
+GET {{baseUrl}}/devs?page=1
+Authorization: Bearer {{authToken}}
+
+### GET /devs — token inválido em rota opcional (não deve bloquear)
+# Confirmado: 200 (não 401), total: 35 — comportamento anônimo, `optionalAuth` nunca nega.
+GET {{baseUrl}}/devs?page=1
+Authorization: Bearer garbage.invalid.token
+
+### GET /devs/{username} — encontrado (fixture sintética, ver AcceptanceReactionSeeder)
+# Esperado: 200, corpo = Dev serializado. `_id` é o id numérico (BIGINT auto_increment),
+# NÃO o username — diferente do design DynamoDB do projeto irmão, que usa slug/username como
+# chave (ver specs/fase-1-data-model.md, "Mapeamento de nomes na resposta pública": MySQL tem
+# PK numérica nativa, mais simples que inventar um slug). `user` = username. `likes`/
+# `deslikes`/`follow`/`ignore` = arrays de ids inteiros (dev01 tem 1 like, 1 deslike, 1
+# follow, 1 ignore, ver AcceptanceReactionSeeder).
+GET {{baseUrl}}/devs/dev01
+
+### GET /devs/{username} — não encontrado
+# Esperado: 200 (não 404) + corpo `null` — paridade com `Dev.findOne` do Mongo original.
+GET {{baseUrl}}/devs/nobody
+
+### POST /devs — sem token
+# Confirmado: 401, {"error":"Token not provided."}.
+POST {{baseUrl}}/devs
+Content-Type: application/json
+
+{ "username": "dev01" }
+
+### POST /devs — dev já existente (idempotente)
+# Confirmado: 201 (sempre 201, mesmo já existindo — paridade com `DevController.store`
+# original: `findOrCreateDev` não distingue os dois casos na resposta, sempre `res.status(201)`).
+POST {{baseUrl}}/devs
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{ "username": "dev01" }
+
+### POST /devs — dev novo, username real do GitHub (profile público completa nome/bio/avatar)
+# Confirmado: 201, `name`/`avatar` preenchidos a partir do profile público real do GitHub
+# (`octocat` — conta clássica de teste do próprio GitHub, sempre existe).
+POST {{baseUrl}}/devs
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{ "username": "octocat" }
+
+### POST /devs — username que não existe no GitHub (achado real desta fase)
+# Esperado: 500 — `DevModel::findOrCreate` lança `RuntimeException` explícita (achado real:
+# sem essa guarda, `avatar` fica vazio, a validação `required` falha, `insert()` devolve
+# `false`, e `$this->find(false)` do CI4 devolve TODOS os registros da tabela em vez de
+# nenhum — bug real do framework, não hipotético, reproduzido rodando de verdade. Corrigido
+# lançando um erro claro em vez de deixar isso silencioso). Limitação aceita: um username
+# genuinamente inexistente no GitHub não tem como virar um Dev válido sem avatar — o original
+# também não tinha um caminho de sucesso pra esse caso, só falhava de um jeito bem pior.
+POST {{baseUrl}}/devs
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{ "username": "usuario-que-nao-existe-de-verdade-no-github-xyz999" }

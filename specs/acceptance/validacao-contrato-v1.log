@@ -1,0 +1,102 @@
+# Validação estrita do contrato (specs/fase-0-openapi.yaml) × v1 local (php-codei, commit 3229c4c)
+# Data: 2026-10-02 (2ª rodada, depois de D-8: campos `nullable` documentados no contrato).
+# Gerado por: specs/tools/validate-contract.cjs --writes
+# Alvo: http://localhost:8081/v1 (v1 em Docker, banco recriado com a fixture sintética; nunca o Render).
+# Modo estrito: propriedade declarada e ausente, extra, tipo diferente, null sem `nullable`, enum e date-time.
+# Resumo: nenhuma propriedade ausente ou extra; nenhum null sem nullable; nenhum enum ou data inválidos.
+# O que resta é DESEJADO: o v1 devolve ids inteiros e o contrato manda string (D-7, aprovada: o `php-laravel`
+# devolve string, então este diff some no php-laravel) e as 2 rotas que o v1 não tem (GET /search e
+# GET /feed/subscriptions: 404). A 1ª rodada (antes do D-8) tinha também os null de userGithub, description,
+# avatar, viewnum e date; o contrato agora os declara `nullable`.
+# Saída bruta abaixo (sem tokens).
+#
+# Contrato × http://localhost:8081/v1 — modo estrito (com escritas)
+ok      200 GET / [public]
+DIVERGE 200 GET /devs?page=1 [public]
+          tipo      $.docs[]._id: contrato=string, obtido=integer
+DIVERGE 200 GET /devs?page=1 [auth]
+          tipo      $.docs[]._id: contrato=string, obtido=integer
+DIVERGE 200 GET /devs/dev01 [public]
+          tipo      $._id: contrato=string, obtido=integer
+          tipo      $.likes[]: contrato=string, obtido=integer
+          tipo      $.deslikes[]: contrato=string, obtido=integer
+          tipo      $.follow[]: contrato=string, obtido=integer
+          tipo      $.ignore[]: contrato=string, obtido=integer
+DIVERGE 200 GET /channels [public]
+          tipo      $[]._id: contrato=string, obtido=integer
+DIVERGE 200 GET /channels/Canal%20Alpha [public]
+          tipo      $._id: contrato=string, obtido=integer
+ok      200 GET /description/feed [public] (contrato: text/html string)
+ok      200 GET /description/category [public] (contrato: text/html string)
+DIVERGE 200 GET /feed/trending?page=1 [public]
+          tipo      $.docs[]._id: contrato=string, obtido=integer
+          tipo      $.docs[].channel_id: contrato=string, obtido=integer
+DIVERGE 200 GET /feed/trending?page=1 [auth]
+          tipo      $.docs[]._id: contrato=string, obtido=integer
+          tipo      $.docs[].channel_id: contrato=string, obtido=integer
+DIVERGE 200 GET /feed/channel?channel_name=Canal%20Beta&page=1 [public]
+          tipo      $.docs[]._id: contrato=string, obtido=integer
+          tipo      $.docs[].channel_id: contrato=string, obtido=integer
+DIVERGE 200 GET /video/vidalpha01 [public]
+          tipo      $._id: contrato=string, obtido=integer
+          tipo      $.channel_id: contrato=string, obtido=integer
+DIVERGE 200 GET /me [auth]
+          tipo      $._id: contrato=string, obtido=integer
+          tipo      $.likes[]: contrato=string, obtido=integer
+          tipo      $.deslikes[]: contrato=string, obtido=integer
+          tipo      $.follow[]: contrato=string, obtido=integer
+          tipo      $.ignore[]: contrato=string, obtido=integer
+DIVERGE 200 GET /likes/devs [auth]
+          tipo      $[]._id: contrato=string, obtido=integer
+DIVERGE 200 GET /dislikes/devs [auth]
+          tipo      $[]._id: contrato=string, obtido=integer
+DIVERGE 404 GET /search?q=Alpha [public]
+          status    404 não está entre as respostas do contrato (200)
+DIVERGE 404 GET /feed/subscriptions?page=1 [auth]
+          status    404 não está entre as respostas do contrato (200)
+DIVERGE 201 POST /video [auth]
+          tipo      $._id: contrato=string, obtido=integer
+          tipo      $.channel_id: contrato=string, obtido=integer
+DIVERGE 201 POST /channels [auth]
+          tipo      $._id: contrato=string, obtido=integer
+DIVERGE 201 POST /devs [auth]
+          tipo      $._id: contrato=string, obtido=integer
+          tipo      $.likes[]: contrato=string, obtido=integer
+          tipo      $.deslikes[]: contrato=string, obtido=integer
+          tipo      $.follow[]: contrato=string, obtido=integer
+          tipo      $.ignore[]: contrato=string, obtido=integer
+ok      200 POST /video/refresh [auth]
+DIVERGE 200 POST /likes/devs/dev03 [auth]
+          tipo      $._id: contrato=string, obtido=integer
+          tipo      $.likes[]: contrato=string, obtido=integer
+          tipo      $.deslikes[]: contrato=string, obtido=integer
+          tipo      $.follow[]: contrato=string, obtido=integer
+          tipo      $.ignore[]: contrato=string, obtido=integer
+DIVERGE 200 DELETE /likes/devs/dev03 [auth]
+          tipo      $._id: contrato=string, obtido=integer
+          tipo      $.likes[]: contrato=string, obtido=integer
+          tipo      $.deslikes[]: contrato=string, obtido=integer
+          tipo      $.follow[]: contrato=string, obtido=integer
+          tipo      $.ignore[]: contrato=string, obtido=integer
+DIVERGE 200 POST /dislikes/devs/dev03 [auth]
+          tipo      $._id: contrato=string, obtido=integer
+          tipo      $.likes[]: contrato=string, obtido=integer
+          tipo      $.deslikes[]: contrato=string, obtido=integer
+          tipo      $.follow[]: contrato=string, obtido=integer
+          tipo      $.ignore[]: contrato=string, obtido=integer
+DIVERGE 200 DELETE /dislikes/devs/dev03 [auth]
+          tipo      $._id: contrato=string, obtido=integer
+          tipo      $.likes[]: contrato=string, obtido=integer
+          tipo      $.follow[]: contrato=string, obtido=integer
+          tipo      $.ignore[]: contrato=string, obtido=integer
+DIVERGE 200 POST /likes/channels/Canal%20Zeta [auth]
+          tipo      $._id: contrato=string, obtido=integer
+          tipo      $.likes[]: contrato=string, obtido=integer
+          tipo      $.follow[]: contrato=string, obtido=integer
+          tipo      $.ignore[]: contrato=string, obtido=integer
+DIVERGE 200 DELETE /likes/channels/Canal%20Zeta [auth]
+          tipo      $._id: contrato=string, obtido=integer
+          tipo      $.likes[]: contrato=string, obtido=integer
+          tipo      $.follow[]: contrato=string, obtido=integer
+          tipo      $.ignore[]: contrato=string, obtido=integer
+# 27 requisições, 23 com divergência
