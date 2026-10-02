@@ -1,0 +1,23 @@
+# Notas locais (não versionadas)
+CLAUDE.local.md
+**/*__.*
+**__.**
+
+# Segredos
+.env
+.env.*
+!.env.example
+*.private.*
+specs/acceptance/http-client.private.env.json
+
+# Dependências e artefatos
+/vendor/
+/node_modules/
+/.serverless/
+/.phpunit.cache/
+.phpunit.result.cache
+
+# Editor e sistema
+.vscode/
+.idea/
+.DS_Store
