@@ -1,0 +1,71 @@
+name: Deploy
+
+# Só a `main`. Os gates do CI rodam de novo antes de publicar. Sem chave de longa duração: a role é assumida por OIDC
+# e a confiança da role só aceita este repositório na branch main (specs/iam/deploy-role-trust.json).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write   # necessário para o OIDC
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: ci
+    # Pula (em vez de falhar) até a role existir: a variável é criada depois de scripts/aws-bootstrap.sh --apply.
+    if: ${{ vars.AWS_DEPLOY_ROLE_ARN != '' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      AWS_REGION: us-east-2
+      FUNCTION_NAME: devfinder-laravel-prod-web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql, intl, zip, bcmath
+          tools: composer:v2
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-2
+
+      - name: Dependências de produção
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress
+
+      - name: Migrations (URL DIRETA do Neon, só aqui; o runtime usa a pooled)
+        env:
+          APP_ENV: production
+          APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=   # placeholder: o migrate não usa criptografia
+          DB_CONNECTION: pgsql
+          DB_URL: ${{ secrets.DIRECT_DATABASE_URL }}
+        run: php artisan migrate --force
+
+      - name: Pacote e allowlist
+        run: scripts/package.sh
+
+      - name: Deploy
+        run: npx --yes osls@4.4.0 deploy --stage prod --conceal --param="corsOrigins=${{ vars.CORS_ALLOWED_ORIGINS }}"
+
+      - name: Smoke test (falha o pipeline)
+        env:
+          ORIGIN: ${{ vars.CORS_ALLOWED_ORIGINS }}
+        run: |
+          BASE_URL="$(aws lambda get-function-url-config --function-name "$FUNCTION_NAME" --query FunctionUrl --output text | sed 's#/$##')"
+          export BASE_URL
+          scripts/smoke.sh

@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-use Studio\Gesso\OpenApiRequestValidator;
-use Studio\Gesso\OpenApiResponseValidator;
 
 return [
     'default_spec' => 'fase-0-openapi',
@@ -90,7 +88,8 @@ return [
     // still recorded as covered. The default skips every 5xx because specs
     // typically do not document production error responses.
     // Set to [] to disable and validate every status code against the spec.
-    'skip_response_codes' => OpenApiResponseValidator::DEFAULT_SKIP_RESPONSE_CODES,
+    // Literais, não as constantes do pacote: o Gesso é dev-only e este arquivo é carregado em produção (`--no-dev`).
+    'skip_response_codes' => ['5\d\d'],
 
     // Regex patterns matched against the response status code that the
     // current HTTP test produced. When `auto_validate_request: true` is on
@@ -102,5 +101,5 @@ return [
     // (an undocumented 4xx still fails — it's a real contract drift).
     // Default `['422', '400']` aligns with the common documented client-error
     // codes; set to [] to disable and keep request validation strict.
-    'skip_request_validation_response_codes' => OpenApiRequestValidator::DEFAULT_SKIP_REQUEST_VALIDATION_RESPONSE_CODES,
+    'skip_request_validation_response_codes' => ['422', '400'],
 ];

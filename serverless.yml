@@ -1,0 +1,79 @@
+service: devfinder-laravel
+
+# Um único stage (`prod`): cada stage duplica função, bucket e log group, e a conta tem concorrência 10 e crédito mínimo
+# (specs/fase-2b-esqueleto-nuvem.md, decisão 1). Deploy por `osls` (oss-serverless), sem login do Serverless Framework (S5).
+provider:
+    name: aws
+    region: us-east-2   # mesma região do projeto Neon (ADR 0009)
+    stage: ${opt:stage, 'prod'}
+    logRetentionInDays: 7
+    environment:
+        APP_NAME: DevFinder
+        APP_ENV: production
+        APP_DEBUG: 'false'
+        # Segredos: `bref-ssm:` é lido pelo runtime do Bref no cold start. NÃO usar `${ssm:...}`: o Serverless grava
+        # o valor em texto no template e na configuração da função (decisão 2 da spec).
+        APP_KEY: bref-ssm:/devfinder-laravel/${sls:stage}/app-key
+        DB_CONNECTION: pgsql
+        DB_URL: bref-ssm:/devfinder-laravel/${sls:stage}/db-url   # URL POOLED (runtime); a direta fica só no CI
+        CACHE_STORE: array        # ADR 0011: `database` entra com o rate limiting, na Fase 4
+        SESSION_DRIVER: array
+        QUEUE_CONNECTION: sync
+        LOG_CHANNEL: json         # config/logging.php: JSON no stderr (CloudWatch), com request_id
+        LOG_LEVEL: info
+        CORS_ALLOWED_ORIGINS: ${param:corsOrigins}   # D-4: origem explícita, nunca `*`
+    iam:
+        role:
+            statements:
+                -   Effect: Allow
+                    Action: ssm:GetParameters
+                    # Fn::Join com Ref: o id da conta só é conhecido pelo CloudFormation (o pacote não precisa de credenciais da AWS)
+                    Resource:
+                        Fn::Join:
+                            - ':'
+                            -   - arn:aws:ssm
+                                -   Ref: AWS::Region
+                                -   Ref: AWS::AccountId
+                                - parameter/devfinder-laravel/${sls:stage}/*
+
+functions:
+    web:
+        handler: public/index.php
+        runtime: php-84-fpm
+        architecture: x86_64
+        timeout: 28
+        memorySize: 1024
+        url: true   # Function URL, auth NONE (ADR 0004); concorrência reservada impossível nesta conta (S6)
+
+params:
+    default:
+        corsOrigins: http://localhost:3000   # trocar pela origem real do frontend antes do uso (D-4)
+
+package:
+    patterns:
+        - '!.env'
+        - '!.env.*'
+        - '!.git/**'
+        - '!.github/**'
+        - '!.serverless/**'
+        - '!docker/**'
+        - '!docker-compose.yml'
+        - '!node_modules/**'
+        - '!public/storage'
+        - '!scripts/**'
+        - '!storage/**'
+        - '!tests/**'
+        - '!database/seeders/**'
+        - '!database/factories/**'
+        - '!specs/**'
+        - '!*.md'
+        - '!plan*'
+        - '!run.sh'
+        - '!phpstan.neon'
+        - '!pint.json'
+        - '!phpunit.xml'
+        # /docs/openapi.yaml serve o contrato-fonte: é o único arquivo de specs/ que vai no pacote
+        - 'specs/fase-0-openapi.yaml'
+
+plugins:
+    - ./vendor/bref/bref

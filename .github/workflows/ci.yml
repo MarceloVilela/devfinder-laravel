@@ -4,12 +4,13 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_call:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -38,6 +39,27 @@ jobs:
         run: PGPASSWORD=devfinder psql -h 127.0.0.1 -U devfinder -d devfinder -c "CREATE DATABASE devfinder_test"
       - name: Gates PHP
         run: scripts/ci.sh
+
+  package:
+    # Empacota como o deploy faz (sem dependências de desenvolvimento) e aplica a allowlist de recursos.
+    # Não usa credenciais da AWS: `osls package` só escreve arquivos.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql, intl, zip, bcmath
+          tools: composer:v2
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Testes da allowlist
+        run: node --test scripts/allowlist.test.cjs
+      - name: Pacote do Lambda + allowlist
+        run: scripts/package.sh
 
   tools:
     runs-on: ubuntu-24.04
