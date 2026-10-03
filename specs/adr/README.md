@@ -2,7 +2,7 @@
 
 Formato: **Status** (`proposta` → `aceita` → `substituída`), Contexto, Decisão, Alternativas, Custo e
 **Critério de reversão**. Nenhuma ADR vira `aceita` antes de a evidência que ela cita existir
-(spike medido, teste real) e da aprovação do usuário. Aceitas em 2026-10-03: 0001, 0002, 0003, 0009, 0010 e 0011. Seguem `proposta` por decisão do usuário (2026-10-03): 0004, aceita na Fase 2b (evidência parcial do S6), e 0005 a 0008, aceitas na Fase 2a (precisam do esqueleto).
+(spike medido, teste real) e da aprovação do usuário. Aceitas em 2026-10-03: 0001, 0002, 0003, 0009, 0010, 0011 e 0012. Seguem `proposta` por decisão do usuário (2026-10-03): 0004, aceita na Fase 2b (evidência parcial do S6), e 0005 a 0008, aceitas na Fase 2a (precisam do esqueleto).
 
 | ADR | Tema | Status |
 |---|---|---|
@@ -17,3 +17,4 @@ Formato: **Status** (`proposta` → `aceita` → `substituída`), Contexto, Deci
 | [0009](./0009-versoes-e-regiao.md) | Versões (PHP, Laravel, Bref) e região | **aceita** (2026-10-03) |
 | [0010](./0010-custo-free-plan.md) | Regra de custo reformulada | **aceita** (2026-10-03) |
 | [0011](./0011-rate-limiting-store.md) | Store do rate limiting | **aceita** (2026-10-03) |
+| [0012](./0012-modelo-de-dados.md) | Modelo de dados relacional | **aceita** (2026-10-03) |

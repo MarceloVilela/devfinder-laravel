@@ -593,7 +593,7 @@ components:
     Dev:
       type: object
       properties:
-        _id: { type: string, example: "1" }
+        _id: { type: string, example: "0198f0a1-0000-7000-8000-000000000001" }
         name: { type: string, example: "Dev 01" }
         user: { type: string, example: dev01 }
         bio: { type: string, example: "" }
@@ -603,19 +603,19 @@ components:
         likes:
           type: array
           items: { type: string }
-          example: ["2", "3"]
+          example: ["0198f0a1-0000-7000-8000-000000000002", "0198f0a1-0000-7000-8000-000000000003"]
         deslikes:
           type: array
           items: { type: string }
-          example: ["3"]
+          example: ["0198f0a1-0000-7000-8000-000000000003"]
         follow:
           type: array
           items: { type: string }
-          example: ["1"]
+          example: ["0198f0a1-0000-7000-8000-000000000001"]
         ignore:
           type: array
           items: { type: string }
-          example: ["2"]
+          example: ["0198f0a1-0000-7000-8000-000000000002"]
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
 
@@ -629,11 +629,13 @@ components:
         docs: { $ref: "#/components/schemas/ArrayOfDev" }
         total: { type: number, example: 21 }
         itemsPerPage: { type: number, example: 30 }
+        page: { type: number, example: 1, description: "Página efetivamente devolvida (após o ajuste de page inválido ou além do fim). Campo novo, aditivo (D-11)." }
+        totalPages: { type: number, example: 1, description: "ceil(total / itemsPerPage), mínimo 1. Campo novo, aditivo (D-11)." }
 
     Channel:
       type: object
       properties:
-        _id: { type: string, example: "1" }
+        _id: { type: string, example: "0198f0a1-0000-7000-8000-000000000001" }
         name: { type: string, example: "Canal Alpha" }
         userGithub: { type: string, nullable: true, example: dev01 }
         link:
@@ -720,6 +722,8 @@ components:
         docs: { $ref: "#/components/schemas/ArrayOfVideo" }
         total: { type: number, example: 1920 }
         itemsPerPage: { type: number, example: 30 }
+        page: { type: number, example: 1, description: "Página efetivamente devolvida. Campo novo, aditivo (D-11)." }
+        totalPages: { type: number, example: 64, description: "ceil(total / itemsPerPage), mínimo 1. Campo novo, aditivo (D-11)." }
 
     AddVideo:
       type: object

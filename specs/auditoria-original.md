@@ -41,5 +41,7 @@ compara só o que **não** está nesta tabela.
 | D-7 | Ids expostos como **string** (`_id`, `channel_id` e ids em `likes`/`deslikes`/`follow`/`ignore`); o v1 devolve inteiro. O G3 normaliza o id do v1 para string antes de comparar | A14 | usuário | 2026-10-02 |
 | D-8 | Campos `userGithub`, `description`, `avatar` (canal) e `viewnum`, `date` (vídeo) continuam podendo ser `null` (como no v1); o contrato passou a declará-los `nullable: true` | A15 | usuário | 2026-10-02 |
 | D-9 | Exemplos do OpenAPI trocados por dados sintéticos (`Canal Alpha`, `dev01`, `vidalpha01`, `example.test`), sem nomes nem ids reais de terceiros; só os `example:`, nenhum schema mudou | regra de não versionar dados de terceiros | usuário | 2026-10-02 |
+| D-10 | Ids do JSON são **UUIDv7 em string** (era inteiro no v1 e ObjectId no original); só o formato do valor muda, o tipo no contrato segue `string` (D-7) | Fase 1, P-2 | usuário | 2026-10-03 |
+| D-11 | Respostas paginadas ganham `page` e `totalPages` (aditivo): `docs`, `total` e `itemsPerPage` ficam idênticos; `page` informa a página realmente servida (resolve a ambiguidade do clamp) | Fase 1, P-3 | usuário | 2026-10-03 |
 
-Aprovação de D-1 a D-9 dada pelo usuário em 2026-10-02 (D-1 a D-5 em bloco, "aceito as sugestões"; D-6 a D-9 uma a uma). Divergência nova só entra aqui **antes** de ser implementada.
+Aprovação de D-10 e D-11 dada pelo usuário em 2026-10-03 (Fase 1, P-2 e P-3; confirmada após conferir o frontend: ids opacos, campos extras ignorados). Aprovação de D-1 a D-9 dada pelo usuário em 2026-10-02 (D-1 a D-5 em bloco, "aceito as sugestões"; D-6 a D-9 uma a uma). Divergência nova só entra aqui **antes** de ser implementada.

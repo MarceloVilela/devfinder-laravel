@@ -1,0 +1,371 @@
+Pager usage is off.
+CREATE FUNCTION
+== 1. Dataset de paridade (35 devs, 3 canais, 3 tags, 55 vídeos, 2+2 reações)
+psql:/v.sql:8: NOTICE:  truncate cascades to table "channel_tag"
+psql:/v.sql:8: NOTICE:  truncate cascades to table "videos"
+psql:/v.sql:8: NOTICE:  truncate cascades to table "dev_reactions"
+psql:/v.sql:8: NOTICE:  truncate cascades to table "channel_reactions"
+TRUNCATE TABLE
+INSERT 0 35
+INSERT 0 3
+INSERT 0 3
+INSERT 0 3
+INSERT 0 55
+INSERT 0 2
+INSERT 0 2
+ devs | canais | tags | videos | rd | rc 
+------+--------+------+--------+----+----
+   35 |      3 |    3 |     55 |  2 |  2
+(1 row)
+
+== 2. Constraints (cada linha abaixo DEVE falhar, exceto as marcadas OK)
+psql:/v.sql:35: ERROR:  new row for relation "dev_reactions" violates check constraint "dev_reactions_not_self_check"
+DETAIL:  Failing row contains (00000000-0000-7000-8000-000000000005, 00000000-0000-7000-8000-000000000005, 2026-10-03 14:25:54+00, like).
+psql:/v.sql:36: ERROR:  invalid input value for enum dev_reaction_type: "amei"
+LINE 1: ...t_dev_id, type) values (pg_temp.u(5), pg_temp.u(6), 'amei');
+                                                               ^
+INSERT 0 1
+INSERT 0 0
+psql:/v.sql:39: ERROR:  insert or update on table "dev_reactions" violates foreign key constraint "dev_reactions_target_dev_id_foreign"
+DETAIL:  Key (target_dev_id)=(00000000-0000-7000-8000-000000000999) is not present in table "devs".
+psql:/v.sql:40: ERROR:  invalid input value for enum channel_reaction_type: "curtir"
+LINE 1: ...nel_id, type) values (pg_temp.u(1), pg_temp.u(1), 'curtir');
+                                                             ^
+psql:/v.sql:41: ERROR:  duplicate key value violates unique constraint "devs_username_norm_unique"
+DETAIL:  Key (norm_text(username::text))=(dev01) already exists.
+psql:/v.sql:42: ERROR:  duplicate key value violates unique constraint "channels_name_norm_unique"
+DETAIL:  Key (norm_text(name::text))=(canal alpha) already exists.
+psql:/v.sql:43: ERROR:  duplicate key value violates unique constraint "channels_name_norm_unique"
+DETAIL:  Key (norm_text(name::text))=(canal alpha) already exists.
+psql:/v.sql:44: ERROR:  duplicate key value violates unique constraint "channels_link_norm_unique"
+DETAIL:  Key (norm_text(link::text))=(https://youtube.com/alpha) already exists.
+psql:/v.sql:45: ERROR:  duplicate key value violates unique constraint "videos_youtube_id_unique"
+DETAIL:  Key (youtube_id)=(vidalpha01) already exists.
+psql:/v.sql:46: ERROR:  duplicate key value violates unique constraint "videos_url_unique"
+DETAIL:  Key (url)=(https://www.youtube.com/watch?v=vidalpha01) already exists.
+psql:/v.sql:47: ERROR:  insert or update on table "videos" violates foreign key constraint "videos_channel_id_foreign"
+DETAIL:  Key (channel_id)=(00000000-0000-7000-8000-000000000999) is not present in table "channels".
+psql:/v.sql:48: ERROR:  update or delete on table "channels" violates RESTRICT setting of foreign key constraint "videos_channel_id_foreign" on table "videos"
+DETAIL:  Key (id)=(00000000-0000-7000-8000-000000000001) is referenced from table "videos".
+BEGIN
+DELETE 1
+ reacoes_de_dev1_apos_cascade 
+------------------------------
+                            0
+(1 row)
+
+ROLLBACK
+-- Soft delete: apagado libera a chave única; ativo continua protegido
+BEGIN
+UPDATE 1
+INSERT 0 1
+SAVEPOINT
+psql:/v.sql:56: ERROR:  duplicate key value violates unique constraint "devs_username_norm_unique"
+DETAIL:  Key (norm_text(username::text))=(dev02) already exists.
+ROLLBACK
+ dev02_ativos 
+--------------
+            1
+(1 row)
+
+UPDATE 1
+INSERT 0 1
+UPDATE 1
+INSERT 0 1
+ videos_ativos_alpha01 
+-----------------------
+                     1
+(1 row)
+
+ROLLBACK
+-- Acento e caixa na busca por nome (norm_text)
+   achado    
+-------------
+ Canal Alpha
+(1 row)
+
+ educacao_sem_acento 
+---------------------
+                   1
+(1 row)
+
+== 3. Planos das consultas do contrato (dataset de paridade)
+-- GET /devs (anônimo), página 1
+                       QUERY PLAN                        
+---------------------------------------------------------
+ Limit
+   ->  Index Scan using devs_created_at_id_index on devs
+(2 rows)
+
+-- GET /devs (autenticado como dev01): exclui o próprio e quem recebeu like/dislike
+                                                                   QUERY PLAN                                                                   
+------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Index Scan using devs_created_at_id_index on devs
+         Filter: ((id <> '00000000-0000-7000-8000-000000000001'::uuid) AND (NOT (ANY (id = (hashed SubPlan 1).col1))))
+         SubPlan 1
+           ->  Index Only Scan using dev_reactions_pkey on dev_reactions
+                 Index Cond: ((dev_id = '00000000-0000-7000-8000-000000000001'::uuid) AND (type = ANY ('{like,dislike}'::dev_reaction_type[])))
+(6 rows)
+
+-- GET /devs/{username}
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Index Scan using devs_username_norm_unique on devs
+   Index Cond: (norm_text((username)::text) = 'dev01'::text)
+(2 rows)
+
+-- GET /feed/trending
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Limit
+   ->  Nested Loop
+         ->  Index Scan using videos_created_at_id_index on videos v
+         ->  Index Scan using channels_pkey on channels c
+               Index Cond: (id = v.channel_id)
+(5 rows)
+
+-- GET /feed/channel
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
+ Limit
+   ->  Index Scan using videos_channel_created_at_id_index on videos v
+         Index Cond: (channel_id = '00000000-0000-7000-8000-000000000002'::uuid)
+(3 rows)
+
+-- GET /feed/subscriptions (dev01)
+                                                            QUERY PLAN                                                            
+----------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Nested Loop
+         Join Filter: (r.channel_id = v.channel_id)
+         ->  Index Scan using videos_created_at_id_index on videos v
+         ->  Index Only Scan using channel_reactions_pkey on channel_reactions r
+               Index Cond: ((dev_id = '00000000-0000-7000-8000-000000000001'::uuid) AND (type = 'follow'::channel_reaction_type))
+(6 rows)
+
+-- GET /video/{id}
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Index Scan using videos_url_unique on videos
+   Filter: ((youtube_id)::text = 'vidalpha01'::text)
+(2 rows)
+
+-- GET /channels/{q}
+                                                                                  QUERY PLAN                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Index Scan using channels_category_name_index on channels
+   Filter: ((norm_text((name)::text) = 'canal alpha'::text) OR (norm_text((link)::text) = 'canal alpha'::text) OR (norm_text((alternative_link)::text) = 'canal alpha'::text))
+(2 rows)
+
+-- GET /likes/devs
+                                                      QUERY PLAN                                                      
+----------------------------------------------------------------------------------------------------------------------
+ Nested Loop
+   ->  Index Only Scan using dev_reactions_pkey on dev_reactions r
+         Index Cond: ((dev_id = '00000000-0000-7000-8000-000000000001'::uuid) AND (type = 'like'::dev_reaction_type))
+   ->  Index Scan using devs_pkey on devs d
+         Index Cond: (id = r.target_dev_id)
+(5 rows)
+
+== 4. Busca: ILIKE com escape de curingas
+ acha_underscore_literal 
+-------------------------
+                       0
+(1 row)
+
+ sem_escape_underscore 
+-----------------------
+                    55
+(1 row)
+
+ acha_beta_05 
+--------------
+            1
+(1 row)
+
+== 5. Escala: ~100x o v1 (4.000 devs, 2.000 canais, 50.000 vídeos), sintético
+psql:/v.sql:96: NOTICE:  truncate cascades to table "channel_tag"
+psql:/v.sql:96: NOTICE:  truncate cascades to table "videos"
+psql:/v.sql:96: NOTICE:  truncate cascades to table "dev_reactions"
+psql:/v.sql:96: NOTICE:  truncate cascades to table "channel_reactions"
+TRUNCATE TABLE
+INSERT 0 4000
+INSERT 0 2000
+INSERT 0 50000
+INSERT 0 199
+INSERT 0 50
+VACUUM
+-- GET /devs página 134 (offset 3990)
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
+ Limit (actual rows=10.00 loops=1)
+   Buffers: shared hit=91
+   ->  Index Scan using devs_created_at_id_index on devs (actual rows=4000.00 loops=1)
+         Index Searches: 1
+         Buffers: shared hit=91
+ Planning:
+   Buffers: shared hit=50
+ Planning Time: 0.801 ms
+ Execution Time: 0.886 ms
+(9 rows)
+
+-- GET /feed/trending página 1
+                                           QUERY PLAN                                            
+-------------------------------------------------------------------------------------------------
+ Limit (actual rows=30.00 loops=1)
+   Buffers: shared hit=95
+   ->  Nested Loop (actual rows=30.00 loops=1)
+         Buffers: shared hit=95
+         ->  Index Scan using videos_created_at_id_index on videos v (actual rows=30.00 loops=1)
+               Index Searches: 1
+               Buffers: shared hit=5
+         ->  Memoize (actual rows=1.00 loops=30)
+               Cache Key: v.channel_id
+               Cache Mode: logical
+               Hits: 0  Misses: 30  Evictions: 0  Overflows: 0  Memory Usage: 6kB
+               Buffers: shared hit=90
+               ->  Index Scan using channels_pkey on channels c (actual rows=1.00 loops=30)
+                     Index Cond: (id = v.channel_id)
+                     Index Searches: 30
+                     Buffers: shared hit=90
+ Planning:
+   Buffers: shared hit=144
+ Planning Time: 2.002 ms
+ Execution Time: 0.290 ms
+(20 rows)
+
+-- GET /feed/channel
+                                                     QUERY PLAN                                                     
+--------------------------------------------------------------------------------------------------------------------
+ Limit (actual rows=25.00 loops=1)
+   Buffers: shared hit=28
+   ->  Sort (actual rows=25.00 loops=1)
+         Sort Key: created_at DESC, id DESC
+         Sort Method: quicksort  Memory: 31kB
+         Buffers: shared hit=28
+         ->  Bitmap Heap Scan on videos v (actual rows=25.00 loops=1)
+               Recheck Cond: ((channel_id = '00000000-0000-7000-8000-000000000007'::uuid) AND (deleted_at IS NULL))
+               Heap Blocks: exact=25
+               Buffers: shared hit=28
+               ->  Bitmap Index Scan on videos_channel_created_at_id_index (actual rows=25.00 loops=1)
+                     Index Cond: (channel_id = '00000000-0000-7000-8000-000000000007'::uuid)
+                     Index Searches: 1
+                     Buffers: shared hit=3
+ Planning:
+   Buffers: shared hit=1
+ Planning Time: 0.209 ms
+ Execution Time: 0.146 ms
+(18 rows)
+
+-- GET /feed/subscriptions (dev01 segue 50 canais)
+                                                                               QUERY PLAN                                                                               
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit (actual rows=30.00 loops=1)
+   Buffers: shared hit=2046
+   ->  Nested Loop (actual rows=30.00 loops=1)
+         Buffers: shared hit=2046
+         ->  Index Scan using videos_created_at_id_index on videos v (actual rows=1980.00 loops=1)
+               Index Searches: 1
+               Buffers: shared hit=65
+         ->  Memoize (actual rows=0.02 loops=1980)
+               Cache Key: v.channel_id
+               Cache Mode: logical
+               Hits: 0  Misses: 1980  Evictions: 0  Overflows: 0  Memory Usage: 157kB
+               Buffers: shared hit=1981
+               ->  Index Only Scan using channel_reactions_pkey on channel_reactions r (actual rows=0.02 loops=1980)
+                     Index Cond: ((dev_id = '00000000-0000-7000-8000-000000000001'::uuid) AND (channel_id = v.channel_id) AND (type = 'follow'::channel_reaction_type))
+                     Heap Fetches: 0
+                     Index Searches: 1980
+                     Buffers: shared hit=1981
+ Planning:
+   Buffers: shared hit=24
+ Planning Time: 0.550 ms
+ Execution Time: 4.866 ms
+(21 rows)
+
+-- GET /channels/{q}
+                                                                                                                        QUERY PLAN                                                                                                                        
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on channels (actual rows=0.00 loops=1)
+   Recheck Cond: (((norm_text((name)::text) = 'canal 7'::text) AND (deleted_at IS NULL)) OR ((norm_text((link)::text) = 'canal 7'::text) AND (deleted_at IS NULL)) OR ((norm_text((alternative_link)::text) = 'canal 7'::text) AND (deleted_at IS NULL)))
+   Buffers: shared hit=6
+   ->  BitmapOr (actual rows=0.00 loops=1)
+         Buffers: shared hit=6
+         ->  Bitmap Index Scan on channels_name_norm_unique (actual rows=0.00 loops=1)
+               Index Cond: (norm_text((name)::text) = 'canal 7'::text)
+               Index Searches: 1
+               Buffers: shared hit=2
+         ->  Bitmap Index Scan on channels_link_norm_unique (actual rows=0.00 loops=1)
+               Index Cond: (norm_text((link)::text) = 'canal 7'::text)
+               Index Searches: 1
+               Buffers: shared hit=2
+         ->  Bitmap Index Scan on channels_alternative_link_norm_index (actual rows=0.00 loops=1)
+               Index Cond: (norm_text((alternative_link)::text) = 'canal 7'::text)
+               Index Searches: 1
+               Buffers: shared hit=2
+ Planning:
+   Buffers: shared hit=39
+ Planning Time: 0.594 ms
+ Execution Time: 0.093 ms
+(21 rows)
+
+-- Busca com GIN trigram sobre norm_text() (P-5), termo de 4 caracteres
+                                          QUERY PLAN                                           
+-----------------------------------------------------------------------------------------------
+ Limit (actual rows=19.00 loops=1)
+   Buffers: shared hit=27
+   ->  Bitmap Heap Scan on videos (actual rows=19.00 loops=1)
+         Recheck Cond: ((norm_text((title)::text) ~~ '%a1b2%'::text) AND (deleted_at IS NULL))
+         Rows Removed by Index Recheck: 1
+         Heap Blocks: exact=20
+         Buffers: shared hit=27
+         ->  Bitmap Index Scan on videos_title_trgm_index (actual rows=20.00 loops=1)
+               Index Cond: (norm_text((title)::text) ~~ '%a1b2%'::text)
+               Index Searches: 1
+               Buffers: shared hit=7
+ Planning:
+   Buffers: shared hit=4
+ Planning Time: 0.235 ms
+ Execution Time: 0.291 ms
+(15 rows)
+
+                                                                                QUERY PLAN                                                                                
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit (actual rows=1.00 loops=1)
+   Buffers: shared hit=11
+   ->  Bitmap Heap Scan on channels (actual rows=1.00 loops=1)
+         Recheck Cond: (((norm_text((name)::text) ~~ '%a1b2%'::text) AND (deleted_at IS NULL)) OR ((norm_text((link)::text) ~~ '%a1b2%'::text) AND (deleted_at IS NULL)))
+         Heap Blocks: exact=1
+         Buffers: shared hit=11
+         ->  BitmapOr (actual rows=0.00 loops=1)
+               Buffers: shared hit=10
+               ->  Bitmap Index Scan on channels_name_trgm_index (actual rows=1.00 loops=1)
+                     Index Cond: (norm_text((name)::text) ~~ '%a1b2%'::text)
+                     Index Searches: 1
+                     Buffers: shared hit=5
+               ->  Bitmap Index Scan on channels_link_trgm_index (actual rows=0.00 loops=1)
+                     Index Cond: (norm_text((link)::text) ~~ '%a1b2%'::text)
+                     Index Searches: 1
+                     Buffers: shared hit=5
+ Planning:
+   Buffers: shared hit=6
+ Planning Time: 0.318 ms
+ Execution Time: 0.137 ms
+(20 rows)
+
+-- Termo de 2 caracteres (sem trigram utilizável): varredura
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
+ Limit (actual rows=30.00 loops=1)
+   Buffers: shared hit=7
+   ->  Seq Scan on videos (actual rows=30.00 loops=1)
+         Filter: ((deleted_at IS NULL) AND (norm_text((title)::text) ~~ '%a1%'::text))
+         Rows Removed by Filter: 208
+         Buffers: shared hit=7
+ Planning:
+   Buffers: shared hit=1
+ Planning Time: 0.145 ms
+ Execution Time: 2.023 ms
+(10 rows)
+
