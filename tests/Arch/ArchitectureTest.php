@@ -17,8 +17,9 @@ arch('controller não toca Eloquent, banco nem cliente HTTP')
         'Illuminate\Http\Client',
     ]);
 
-// Regra "controller não importa Models da feature" entra com o primeiro Model (Fase 3): o Pest falha
-// com DirectoryNotFound se o namespace não existe, então não dá para declará-la antes.
+arch('controller não importa Models')
+    ->expect('App\Features\*\Http\Controllers')
+    ->not->toUse('App\Features\*\Models');
 
 arch('Shared não importa feature')
     ->expect('App\Shared')

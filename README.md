@@ -3,9 +3,9 @@
 API do DevFinder em **Laravel + PostgreSQL (Neon) em AWS Lambda via Bref**, com o mesmo contrato público de
 `devfinder-api` e custo zero. Reescrita do `php-codei` (CodeIgniter 4 + MySQL).
 
-**Estado**: Fase 2b (esqueleto na nuvem). Há esqueleto Laravel com `/health`, `/health/db`, `/docs` e `GET /v1`, CI, migrations e um
-deploy real (Lambda + Function URL + Neon) verificado por smoke test; **nenhuma regra de domínio ainda**. O deploy foi feito à mão;
-o deploy automático por OIDC só roda depois do merge na `main`.
+**Estado**: Fase 3 (leitura pública) implementada localmente. Há esqueleto Laravel com CI, migrations, as 10 rotas públicas de leitura
+(`/devs`, `/channels`, `/feed/*`, `/video/{id}`, `/description/*`, `/search`, sem personalização por token) e um deploy real (Lambda +
+Function URL + Neon) da Fase 2b. O aceite da Fase 3 no deploy real ainda não foi feito; o deploy automático por OIDC ainda não rodou.
 
 - Plano: [`plan.md`](./plan.md)
 - Estado das specs: [`specs/README.md`](./specs/README.md)

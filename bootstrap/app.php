@@ -9,6 +9,7 @@ use App\Features\Health\Http\Controllers\ShowHealthDbController;
 use App\Shared\Console\ConfigCheck;
 use App\Shared\Http\ErrorRenderer;
 use App\Shared\Http\Middleware\AssignRequestId;
+use App\Shared\Http\Middleware\RejectMalformedInput;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -30,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withCommands([ConfigCheck::class])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(AssignRequestId::class);
+        $middleware->api(append: [RejectMalformedInput::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(fn(): bool => true);

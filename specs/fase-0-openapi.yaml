@@ -114,11 +114,13 @@ paths:
           schema: { type: string }
       responses:
         "200":
-          description: OK
+          description: OK (corpo `null` quando não existe, paridade com o v1; F3-2)
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Dev"
+                nullable: true
+                allOf:
+                  - $ref: "#/components/schemas/Dev"
 
   /channels:
     get:
@@ -164,11 +166,13 @@ paths:
           schema: { type: string }
       responses:
         "200":
-          description: OK
+          description: OK (corpo `null` quando não existe, paridade com o v1; F3-2)
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Channel"
+                nullable: true
+                allOf:
+                  - $ref: "#/components/schemas/Channel"
 
   /channels/refresh:
     post:
@@ -299,11 +303,13 @@ paths:
           schema: { type: string }
       responses:
         "200":
-          description: OK
+          description: OK (corpo `null` quando não existe, paridade com o v1; F3-2)
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Video"
+                nullable: true
+                allOf:
+                  - $ref: "#/components/schemas/Video"
 
   /video:
     post:
