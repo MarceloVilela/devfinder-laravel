@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: devfinder
+      POSTGRES_PASSWORD: devfinder
+      POSTGRES_DB: devfinder
+    ports:
+      - "54320:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devfinder"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - pgdata:/var/lib/postgresql
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
+
+  app:
+    build: docker
+    command: sh -c "composer install --no-interaction --prefer-dist && php artisan migrate --force && php -S 0.0.0.0:8000 -t public public/index.php"
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "8082:8000"
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

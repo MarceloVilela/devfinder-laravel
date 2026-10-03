@@ -7,11 +7,11 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
-        DB::statement("create type channel_reaction_type as enum ('follow', 'ignore')");
+        // Idempotente: `migrate:fresh` apaga tabelas, não tipos (sem --drop-types o `create type` quebraria na 2ª rodada).
+        DB::statement("do $$ begin if not exists (select 1 from pg_type where typname = 'channel_reaction_type') then create type channel_reaction_type as enum ('follow', 'ignore'); end if; end $$");
 
         Schema::create('channel_reactions', function (Blueprint $table): void {
             $table->foreignUuid('dev_id')->constrained()->cascadeOnDelete();

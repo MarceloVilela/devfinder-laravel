@@ -29,7 +29,9 @@ que fica **intocado** e serve de oráculo de paridade. Não alterar `../devfinde
 - Variáveis de ambiente só `[A-Z0-9_]` (ponto no nome sumiu em silêncio no Render).
 - `env()` só dentro de `config/` (quebra com `config:cache`, que o Lambda usa).
 - Referência cruzada nos documentos só para arquivo que existe com aquele nome (conferir antes).
-- O host **não tem `php` nem `composer`**: todo comando PHP roda em container Docker.
+- O host **não tem `php` nem `composer`**: todo comando PHP roda em container Docker (`./run.sh php artisan ...`,
+  `./run.sh vendor/bin/pest`). CI local limpo: `scripts/reproduz-ci.sh`; os gates ficam em `scripts/ci.sh`.
+- Testes usam o banco `devfinder_test` (`RefreshDatabase` apaga tudo): nunca apontar para o banco de desenvolvimento.
 
 ## Regra de custo (reformulada, ADR 0010)
 
