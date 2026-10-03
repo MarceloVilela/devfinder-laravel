@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  php:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: devfinder
+          POSTGRES_PASSWORD: devfinder
+          POSTGRES_DB: devfinder
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U devfinder" --health-interval 3s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql, intl, zip, bcmath
+          tools: composer:v2
+          coverage: none
+      - name: Banco dos testes (RefreshDatabase nunca roda no banco principal)
+        run: PGPASSWORD=devfinder psql -h 127.0.0.1 -U devfinder -d devfinder -c "CREATE DATABASE devfinder_test"
+      - name: Gates PHP
+        run: scripts/ci.sh
+
+  tools:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Normalizador do G3
+        run: node --test specs/tools/normalize-g3.test.cjs

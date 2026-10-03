@@ -1,0 +1,418 @@
+# Execução da Fase 2a — 2026-10-03 (saída real dos comandos, sem ANSI; o `exit=` da seção 1 é o código de saída do script, sem pipe)
+
+## 1. CI reproduzido byte a byte (scripts/reproduz-ci.sh: container PHP limpo, PostgreSQL 18 novo, .env gerado por scripts/ci.sh)
+==== gera .env do CI (só as chaves que o workflow define)
+==== composer validate --strict
+./composer.json is valid
+==== composer install
+Installing dependencies from lock file (including require-dev)
+Verifying lock file contents can be installed on current platform.
+Package operations: 137 installs, 0 updates, 0 removals
+  - Downloading pestphp/pest-plugin (v5.0.0)
+  - Downloading symfony/process (v8.1.7)
+  - Downloading symfony/polyfill-mbstring (v1.43.0)
+  - Downloading symfony/polyfill-intl-normalizer (v1.43.0)
+  - Downloading symfony/polyfill-intl-grapheme (v1.43.0)
+  - Downloading symfony/polyfill-ctype (v1.37.0)
+  - Downloading symfony/string (v8.1.7)
+  - Downloading symfony/deprecation-contracts (v3.7.1)
+  - Downloading psr/container (2.0.2)
+  - Downloading symfony/service-contracts (v3.7.3)
+  - Downloading symfony/polyfill-php85 (v1.43.0)
+  - Downloading symfony/console (v8.1.8)
+  - Downloading sebastian/environment (9.3.3)
+  - Downloading staabm/side-effects-detector (1.0.5)
+  - Downloading sebastian/version (7.0.0)
+  - Downloading sebastian/type (7.0.2)
+  - Downloading sebastian/recursion-context (8.0.1)
+  - Downloading sebastian/object-enumerator (8.1.0)
+  - Downloading sebastian/object-reflector (6.1.0)
+  - Downloading sebastian/global-state (9.0.1)
+  - Downloading sebastian/git-state (1.0.0)
+  - Downloading sebastian/file-filter (1.0.0)
+  - Downloading sebastian/exporter (8.2.1)
+  - Downloading sebastian/diff (9.0.1)
+  - Downloading sebastian/comparator (8.4.0)
+  - Downloading sebastian/cli-parser (5.0.1)
+  - Downloading phpunit/php-timer (9.0.0)
+  - Downloading phpunit/php-text-template (6.0.1)
+  - Downloading phpunit/php-invoker (7.0.0)
+  - Downloading phpunit/php-file-iterator (7.0.2)
+  - Downloading theseer/tokenizer (2.0.1)
+  - Downloading nikic/php-parser (v5.9.0)
+  - Downloading sebastian/lines-of-code (5.0.2)
+  - Downloading sebastian/complexity (6.0.0)
+  - Downloading phpunit/php-code-coverage (14.4.1)
+  - Downloading phar-io/version (3.2.1)
+  - Downloading phar-io/manifest (2.0.4)
+  - Downloading myclabs/deep-copy (1.14.0)
+  - Downloading phpunit/phpunit (13.3.6)
+  - Downloading jean85/pretty-package-versions (2.1.1)
+  - Downloading fidry/cpu-core-counter (1.4.1)
+  - Downloading brianium/paratest (v7.25.0)
+  - Downloading voku/portable-ascii (2.1.1)
+  - Downloading symfony/polyfill-php80 (v1.43.0)
+  - Downloading phpoption/phpoption (1.10.0)
+  - Downloading graham-campbell/result-type (v1.2.0)
+  - Downloading vlucas/phpdotenv (v5.7.0)
+  - Downloading symfony/css-selector (v8.1.6)
+  - Downloading tijsverkoyen/css-to-inline-styles (v2.4.0)
+  - Downloading symfony/var-dumper (v8.1.7)
+  - Downloading symfony/polyfill-uuid (v1.43.0)
+  - Downloading symfony/uid (v8.1.8)
+  - Downloading symfony/routing (v8.1.8)
+  - Downloading symfony/polyfill-php86 (v1.43.0)
+  - Downloading symfony/polyfill-php84 (v1.43.0)
+  - Downloading symfony/polyfill-intl-idn (v1.43.0)
+  - Downloading symfony/mime (v8.1.7)
+  - Downloading psr/event-dispatcher (1.0.0)
+  - Downloading symfony/event-dispatcher-contracts (v3.7.1)
+  - Downloading symfony/event-dispatcher (v8.1.5)
+  - Downloading psr/log (3.0.2)
+  - Downloading doctrine/lexer (3.0.3)
+  - Downloading egulias/email-validator (4.0.4)
+  - Downloading symfony/mailer (v8.1.7)
+  - Downloading symfony/http-foundation (v8.1.8)
+  - Downloading symfony/error-handler (v8.1.8)
+  - Downloading symfony/http-kernel (v8.1.8)
+  - Downloading symfony/finder (v8.1.8)
+  - Downloading ramsey/collection (2.1.1)
+  - Downloading brick/math (1.0.0)
+  - Downloading ramsey/uuid (4.9.4)
+  - Downloading psr/simple-cache (3.0.0)
+  - Downloading psr/http-message (2.0)
+  - Downloading nunomaduro/termwind (v2.4.0)
+  - Downloading symfony/translation-contracts (v3.7.1)
+  - Downloading symfony/translation (v8.1.5)
+  - Downloading psr/clock (1.0.0)
+  - Downloading symfony/clock (v8.1.0)
+  - Downloading carbonphp/carbon-doctrine-types (3.2.1)
+  - Downloading nesbot/carbon (3.14.2)
+  - Downloading monolog/monolog (3.12.1)
+  - Downloading psr/http-factory (1.1.0)
+  - Downloading league/uri-interfaces (7.8.1)
+  - Downloading league/uri (7.8.1)
+  - Downloading league/mime-type-detection (1.17.0)
+  - Downloading league/flysystem-local (3.35.3)
+  - Downloading league/flysystem (3.36.0)
+  - Downloading nette/utils (v4.1.5)
+  - Downloading nette/schema (v1.3.6)
+  - Downloading dflydev/dot-access-data (v3.0.3)
+  - Downloading league/config (v1.2.0)
+  - Downloading league/commonmark (2.10.3)
+  - Downloading laravel/serializable-closure (v2.1.0)
+  - Downloading laravel/prompts (v0.3.24)
+  - Downloading guzzlehttp/uri-template (v2.0.1)
+  - Downloading symfony/polyfill-php82 (v1.43.0)
+  - Downloading guzzlehttp/psr7 (3.1.0)
+  - Downloading guzzlehttp/promises (3.0.2)
+  - Downloading psr/http-client (1.0.3)
+  - Downloading guzzlehttp/guzzle (8.2.0)
+  - Downloading fruitcake/php-cors (v1.4.0)
+  - Downloading dragonmantank/cron-expression (v3.6.0)
+  - Downloading doctrine/inflector (2.1.0)
+  - Downloading laravel/framework (v13.34.0)
+  - Downloading spatie/laravel-package-tools (1.93.3)
+  - Downloading phpstan/phpdoc-parser (2.3.6)
+  - Downloading dedoc/scramble (v0.13.47)
+  - Downloading fakerphp/faker (v1.24.1)
+  - Downloading phpstan/phpstan (2.2.16)
+  - Downloading iamcal/sql-parser (v0.7)
+  - Downloading larastan/larastan (v3.12.2)
+  - Downloading laravel/pail (v1.2.7)
+  - Downloading laravel/agent-detector (v2.0.2)
+  - Downloading laravel/pao (v1.1.5)
+  - Downloading laravel/pint (v1.32.1)
+  - Downloading psy/psysh (v0.12.24)
+  - Downloading laravel/tinker (v3.0.2)
+  - Downloading hamcrest/hamcrest-php (v3.0.0)
+  - Downloading mockery/mockery (1.6.15)
+  - Downloading filp/whoops (2.18.5)
+  - Downloading nunomaduro/collision (v8.9.5)
+  - Downloading opis/string (2.1.0)
+  - Downloading opis/uri (1.1.0)
+  - Downloading webmozart/assert (2.4.1)
+  - Downloading phpdocumentor/reflection-common (2.2.1)
+  - Downloading doctrine/deprecations (1.1.6)
+  - Downloading phpdocumentor/type-resolver (2.1.0)
+  - Downloading phpdocumentor/reflection-docblock (6.0.3)
+  - Downloading ta-tikoma/phpunit-architecture-test (0.8.7)
+  - Downloading pestphp/pest-plugin-arch (v5.0.0)
+  - Downloading pestphp/pest-plugin-profanity (v5.0.0)
+  - Downloading pestphp/pest-plugin-mutate (v5.0.2)
+  - Downloading pestphp/pest (v5.3.0)
+  - Downloading pestphp/pest-plugin-laravel (v5.0.1)
+  - Downloading opis/json-schema (2.6.0)
+  - Downloading studio-design/gesso (v2.6.0)
+  - Downloading symfony/yaml (v8.1.8)
+  - Installing pestphp/pest-plugin (v5.0.0): Extracting archive
+  - Installing symfony/process (v8.1.7): Extracting archive
+  - Installing symfony/polyfill-mbstring (v1.43.0): Extracting archive
+  - Installing symfony/polyfill-intl-normalizer (v1.43.0): Extracting archive
+  - Installing symfony/polyfill-intl-grapheme (v1.43.0): Extracting archive
+  - Installing symfony/polyfill-ctype (v1.37.0): Extracting archive
+  - Installing symfony/string (v8.1.7): Extracting archive
+  - Installing symfony/deprecation-contracts (v3.7.1): Extracting archive
+  - Installing psr/container (2.0.2): Extracting archive
+  - Installing symfony/service-contracts (v3.7.3): Extracting archive
+  - Installing symfony/polyfill-php85 (v1.43.0): Extracting archive
+  - Installing symfony/console (v8.1.8): Extracting archive
+  - Installing sebastian/environment (9.3.3): Extracting archive
+  - Installing staabm/side-effects-detector (1.0.5): Extracting archive
+  - Installing sebastian/version (7.0.0): Extracting archive
+  - Installing sebastian/type (7.0.2): Extracting archive
+  - Installing sebastian/recursion-context (8.0.1): Extracting archive
+  - Installing sebastian/object-enumerator (8.1.0): Extracting archive
+  - Installing sebastian/object-reflector (6.1.0): Extracting archive
+  - Installing sebastian/global-state (9.0.1): Extracting archive
+  - Installing sebastian/git-state (1.0.0): Extracting archive
+  - Installing sebastian/file-filter (1.0.0): Extracting archive
+  - Installing sebastian/exporter (8.2.1): Extracting archive
+  - Installing sebastian/diff (9.0.1): Extracting archive
+  - Installing sebastian/comparator (8.4.0): Extracting archive
+  - Installing sebastian/cli-parser (5.0.1): Extracting archive
+  - Installing phpunit/php-timer (9.0.0): Extracting archive
+  - Installing phpunit/php-text-template (6.0.1): Extracting archive
+  - Installing phpunit/php-invoker (7.0.0): Extracting archive
+  - Installing phpunit/php-file-iterator (7.0.2): Extracting archive
+  - Installing theseer/tokenizer (2.0.1): Extracting archive
+  - Installing nikic/php-parser (v5.9.0): Extracting archive
+  - Installing sebastian/lines-of-code (5.0.2): Extracting archive
+  - Installing sebastian/complexity (6.0.0): Extracting archive
+  - Installing phpunit/php-code-coverage (14.4.1): Extracting archive
+  - Installing phar-io/version (3.2.1): Extracting archive
+  - Installing phar-io/manifest (2.0.4): Extracting archive
+  - Installing myclabs/deep-copy (1.14.0): Extracting archive
+  - Installing phpunit/phpunit (13.3.6): Extracting archive
+  - Installing jean85/pretty-package-versions (2.1.1): Extracting archive
+  - Installing fidry/cpu-core-counter (1.4.1): Extracting archive
+  - Installing brianium/paratest (v7.25.0): Extracting archive
+  - Installing voku/portable-ascii (2.1.1): Extracting archive
+  - Installing symfony/polyfill-php80 (v1.43.0): Extracting archive
+  - Installing phpoption/phpoption (1.10.0): Extracting archive
+  - Installing graham-campbell/result-type (v1.2.0): Extracting archive
+  - Installing vlucas/phpdotenv (v5.7.0): Extracting archive
+  - Installing symfony/css-selector (v8.1.6): Extracting archive
+  - Installing tijsverkoyen/css-to-inline-styles (v2.4.0): Extracting archive
+  - Installing symfony/var-dumper (v8.1.7): Extracting archive
+  - Installing symfony/polyfill-uuid (v1.43.0): Extracting archive
+  - Installing symfony/uid (v8.1.8): Extracting archive
+  - Installing symfony/routing (v8.1.8): Extracting archive
+  - Installing symfony/polyfill-php86 (v1.43.0): Extracting archive
+  - Installing symfony/polyfill-php84 (v1.43.0): Extracting archive
+  - Installing symfony/polyfill-intl-idn (v1.43.0): Extracting archive
+  - Installing symfony/mime (v8.1.7): Extracting archive
+  - Installing psr/event-dispatcher (1.0.0): Extracting archive
+  - Installing symfony/event-dispatcher-contracts (v3.7.1): Extracting archive
+  - Installing symfony/event-dispatcher (v8.1.5): Extracting archive
+  - Installing psr/log (3.0.2): Extracting archive
+  - Installing doctrine/lexer (3.0.3): Extracting archive
+  - Installing egulias/email-validator (4.0.4): Extracting archive
+  - Installing symfony/mailer (v8.1.7): Extracting archive
+  - Installing symfony/http-foundation (v8.1.8): Extracting archive
+  - Installing symfony/error-handler (v8.1.8): Extracting archive
+  - Installing symfony/http-kernel (v8.1.8): Extracting archive
+  - Installing symfony/finder (v8.1.8): Extracting archive
+  - Installing ramsey/collection (2.1.1): Extracting archive
+  - Installing brick/math (1.0.0): Extracting archive
+  - Installing ramsey/uuid (4.9.4): Extracting archive
+  - Installing psr/simple-cache (3.0.0): Extracting archive
+  - Installing psr/http-message (2.0): Extracting archive
+  - Installing nunomaduro/termwind (v2.4.0): Extracting archive
+  - Installing symfony/translation-contracts (v3.7.1): Extracting archive
+  - Installing symfony/translation (v8.1.5): Extracting archive
+  - Installing psr/clock (1.0.0): Extracting archive
+  - Installing symfony/clock (v8.1.0): Extracting archive
+  - Installing carbonphp/carbon-doctrine-types (3.2.1): Extracting archive
+  - Installing nesbot/carbon (3.14.2): Extracting archive
+  - Installing monolog/monolog (3.12.1): Extracting archive
+  - Installing psr/http-factory (1.1.0): Extracting archive
+  - Installing league/uri-interfaces (7.8.1): Extracting archive
+  - Installing league/uri (7.8.1): Extracting archive
+  - Installing league/mime-type-detection (1.17.0): Extracting archive
+  - Installing league/flysystem-local (3.35.3): Extracting archive
+  - Installing league/flysystem (3.36.0): Extracting archive
+  - Installing nette/utils (v4.1.5): Extracting archive
+  - Installing nette/schema (v1.3.6): Extracting archive
+  - Installing dflydev/dot-access-data (v3.0.3): Extracting archive
+  - Installing league/config (v1.2.0): Extracting archive
+  - Installing league/commonmark (2.10.3): Extracting archive
+  - Installing laravel/serializable-closure (v2.1.0): Extracting archive
+  - Installing laravel/prompts (v0.3.24): Extracting archive
+  - Installing guzzlehttp/uri-template (v2.0.1): Extracting archive
+  - Installing symfony/polyfill-php82 (v1.43.0): Extracting archive
+  - Installing guzzlehttp/psr7 (3.1.0): Extracting archive
+  - Installing guzzlehttp/promises (3.0.2): Extracting archive
+  - Installing psr/http-client (1.0.3): Extracting archive
+  - Installing guzzlehttp/guzzle (8.2.0): Extracting archive
+  - Installing fruitcake/php-cors (v1.4.0): Extracting archive
+  - Installing dragonmantank/cron-expression (v3.6.0): Extracting archive
+  - Installing doctrine/inflector (2.1.0): Extracting archive
+  - Installing laravel/framework (v13.34.0): Extracting archive
+  - Installing spatie/laravel-package-tools (1.93.3): Extracting archive
+  - Installing phpstan/phpdoc-parser (2.3.6): Extracting archive
+  - Installing dedoc/scramble (v0.13.47): Extracting archive
+  - Installing fakerphp/faker (v1.24.1): Extracting archive
+  - Installing phpstan/phpstan (2.2.16): Extracting archive
+  - Installing iamcal/sql-parser (v0.7): Extracting archive
+  - Installing larastan/larastan (v3.12.2): Extracting archive
+  - Installing laravel/pail (v1.2.7): Extracting archive
+  - Installing laravel/agent-detector (v2.0.2): Extracting archive
+  - Installing laravel/pao (v1.1.5): Extracting archive
+  - Installing laravel/pint (v1.32.1): Extracting archive
+  - Installing psy/psysh (v0.12.24): Extracting archive
+  - Installing laravel/tinker (v3.0.2): Extracting archive
+  - Installing hamcrest/hamcrest-php (v3.0.0): Extracting archive
+  - Installing mockery/mockery (1.6.15): Extracting archive
+  - Installing filp/whoops (2.18.5): Extracting archive
+  - Installing nunomaduro/collision (v8.9.5): Extracting archive
+  - Installing opis/string (2.1.0): Extracting archive
+  - Installing opis/uri (1.1.0): Extracting archive
+  - Installing webmozart/assert (2.4.1): Extracting archive
+  - Installing phpdocumentor/reflection-common (2.2.1): Extracting archive
+  - Installing doctrine/deprecations (1.1.6): Extracting archive
+  - Installing phpdocumentor/type-resolver (2.1.0): Extracting archive
+  - Installing phpdocumentor/reflection-docblock (6.0.3): Extracting archive
+  - Installing ta-tikoma/phpunit-architecture-test (0.8.7): Extracting archive
+  - Installing pestphp/pest-plugin-arch (v5.0.0): Extracting archive
+  - Installing pestphp/pest-plugin-profanity (v5.0.0): Extracting archive
+  - Installing pestphp/pest-plugin-mutate (v5.0.2): Extracting archive
+  - Installing pestphp/pest (v5.3.0): Extracting archive
+  - Installing pestphp/pest-plugin-laravel (v5.0.1): Extracting archive
+  - Installing opis/json-schema (2.6.0): Extracting archive
+  - Installing studio-design/gesso (v2.6.0): Extracting archive
+  - Installing symfony/yaml (v8.1.8): Extracting archive
+Generating optimized autoload files
+> Illuminate\Foundation\ComposerScripts::postAutoloadDump
+> @php artisan package:discover --ansi
+   INFO  Discovering packages.  
+  dedoc/scramble ........................................................ DONE
+  laravel/pail .......................................................... DONE
+  laravel/pao ........................................................... DONE
+  laravel/tinker ........................................................ DONE
+  nesbot/carbon ......................................................... DONE
+  nunomaduro/collision .................................................. DONE
+  nunomaduro/termwind ................................................... DONE
+  pestphp/pest-plugin-laravel ........................................... DONE
+  studio-design/gesso ................................................... DONE
+93 packages you are using are looking for funding.
+Use the `composer fund` command to find out more!
+==== composer audit
+No security vulnerability advisories found.
+==== chave da aplicação
+   INFO  Application key set successfully.  
+==== pint --test
+  .......................................................
+  ──────────────────────────────────────────────────────────────────────── PER  
+    PASS   .......................................................... 55 files  
+==== larastan nível 9 (sem baseline)
+Note: Using configuration file /app/phpstan.neon.
+ [OK] No errors                                                                 
+==== config:check
+Configuração completa: APP_KEY, DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD
+==== migrate e rollback e migrate (reversível)
+   INFO  Preparing database.  
+  Creating migration table ...................................... 12.48ms DONE
+   INFO  Running migrations.  
+  0001_01_01_000001_create_cache_table .......................... 31.17ms DONE
+  2026_10_03_100000_create_norm_text_function .................. 112.84ms DONE
+  2026_10_03_100001_create_devs_table .......................... 120.90ms DONE
+  2026_10_03_100002_create_channels_table ....................... 26.08ms DONE
+  2026_10_03_100003_create_tags_table ........................... 10.33ms DONE
+  2026_10_03_100004_create_channel_tag_table .................... 20.35ms DONE
+  2026_10_03_100005_create_videos_table ......................... 20.92ms DONE
+  2026_10_03_100006_create_dev_reactions_table .................. 18.62ms DONE
+  2026_10_03_100007_create_channel_reactions_table .............. 14.64ms DONE
+   INFO  Rolling back migrations.  
+  2026_10_03_100007_create_channel_reactions_table ............. 521.25ms DONE
+  2026_10_03_100006_create_dev_reactions_table .................. 13.54ms DONE
+  2026_10_03_100005_create_videos_table ......................... 14.33ms DONE
+  2026_10_03_100004_create_channel_tag_table ..................... 8.40ms DONE
+  2026_10_03_100003_create_tags_table ............................ 5.32ms DONE
+  2026_10_03_100002_create_channels_table ....................... 29.45ms DONE
+  2026_10_03_100001_create_devs_table ............................ 9.56ms DONE
+  2026_10_03_100000_create_norm_text_function ................... 29.59ms DONE
+  0001_01_01_000001_create_cache_table .......................... 16.02ms DONE
+   INFO  Running migrations.  
+  0001_01_01_000001_create_cache_table ......................... 440.55ms DONE
+  2026_10_03_100000_create_norm_text_function ................... 25.57ms DONE
+  2026_10_03_100001_create_devs_table ........................... 15.20ms DONE
+  2026_10_03_100002_create_channels_table ....................... 17.26ms DONE
+  2026_10_03_100003_create_tags_table ............................ 6.44ms DONE
+  2026_10_03_100004_create_channel_tag_table ................... 102.11ms DONE
+  2026_10_03_100005_create_videos_table ......................... 22.37ms DONE
+  2026_10_03_100006_create_dev_reactions_table .................. 21.07ms DONE
+  2026_10_03_100007_create_channel_reactions_table .............. 16.34ms DONE
+==== paridade de rotas: nada registrado fora do contrato
+==== pest (Feature, Contract, Arch)
+   PASS  Tests\Unit\ConfigKeysTest
+   PASS  Tests\Feature\AppInfoTest
+   PASS  Tests\Feature\ConfigCheckTest
+   PASS  Tests\Feature\DocsTest
+   PASS  Tests\Feature\ErrorHandlerTest
+   PASS  Tests\Feature\HealthTest
+   PASS  Tests\Feature\LazyLoadingTest
+   PASS  Tests\Feature\ParityDatasetSeederTest
+   PASS  Tests\Feature\RequestIdTest
+   PASS  Tests\Contract\AppInfoContractTest
+   PASS  Tests\Arch\ArchitectureTest
+  Tests:    33 passed (81 assertions)
+  Duration: 2.29s
+   INFO  OpenAPI Contract Test Coverage
+==================================================
+[fase-0-openapi] endpoints: 2/30 fully covered (6.7%), 0 partial, 28 uncovered
+        responses: 2/39 covered (5.1%), 0 skipped, 37 uncovered
+        SDK responses: 0/26 exercised (0%), 26 unexercised
+--------------------------------------------------
+CI PHP OK
+exit=0
+
+## 2. Prova de que o teste de arquitetura protege (specs/tools/prova-arch.sh)
+  ⨯ controller não toca Eloquent, banco nem cliente HTTP                 0.78s  
+   FAILED  Tests\Arch\ArchitectureTest > controller não toca Eloquent, banco…   
+  Expecting 'App\Features\*\Http\Controllers' not to use 'Illuminate\Support\Facades\DB'.
+PROVA OK: o teste reprovou a violação (exit=1)
+
+## 3. Normalizador do G3 (node --test)
+✔ v1 (ids inteiros) e php-laravel (UUID + page/totalPages) ficam iguais depois de normalizar (1.883072ms)
+✔ ids viram a chave natural (1.644369ms)
+✔ page, totalPages, createdAt e updatedAt somem (1.043761ms)
+✔ diferença real é detectada (ordem de lista é contrato) (0.573167ms)
+✔ diferença de valor é detectada (0.467962ms)
+✔ ordem de chaves e de conjuntos de reação não importa (0.396921ms)
+✔ id sem chave natural falha alto, não em silêncio (0.531527ms)
+ℹ tests 7
+ℹ pass 7
+ℹ fail 0
+
+## 4. docker compose up (app + PostgreSQL 18), chamadas do host
+GET /health -> 200
+GET /health/db -> 200
+GET /v1 -> 200
+GET /docs -> 200
+GET /docs/openapi.yaml -> 200
+GET /nada -> 404
+$ curl -si localhost:8082/health
+HTTP/1.1 200 OK
+X-Request-Id: ba7ab9f2-06af-4467-9222-19da6e99be8c
+{"status":"ok"}
+$ curl -s localhost:8082/v1
+{"appname":"DevFinder"}
+$ curl -s localhost:8082/nada
+{"error":"Not found."}
+$ log de boot (só nomes das chaves, nunca valores)
+app-1  | {"message":"boot","context":{"env":"local","config_present":["APP_KEY","DB_HOST","DB_DATABASE","DB_USERNAME","DB_PASSWORD"],"config_missing":[]},"level":200,"level_name":"INFO","channel":"local","datetime":"2026-10-03T15:07:58.774555+00:00","extra":{}}
+
+## 5. config:check (local)
+Configuração completa: APP_KEY, DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD
+
+## 6. gesso:routes (rotas do contrato ainda sem implementação são esperadas: Fases 3 a 6)
+   WARN  Documented but not registered.  
+   WARN  Registered but undocumented.  
+| Method | Laravel URI                      | Name                     | Domain |
+| GET    | /health                          | health                   |        |
+| GET    | /health/db                       | health.db                |        |
+| GET    | /docs                            | docs                     |        |
+| GET    | /docs/openapi.yaml               | docs.openapi             |        |
+| GET    | /docs/api                        | scramble.docs.ui         |        |
+| GET    | /docs/api.json                   | scramble.docs.document   |        |

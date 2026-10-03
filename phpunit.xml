@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+        <testsuite name="Contract">
+            <directory>tests/Contract</directory>
+        </testsuite>
+        <testsuite name="Arch">
+            <directory>tests/Arch</directory>
+        </testsuite>
+    </testsuites>
+    <extensions>
+        <bootstrap class="Studio\Gesso\PHPUnit\OpenApiCoverageExtension">
+            <parameter name="spec_base_path" value="specs"/>
+            <parameter name="strip_prefixes" value="/v1"/>
+            <parameter name="specs" value="fase-0-openapi"/>
+        </bootstrap>
+    </extensions>
+    <source>
+        <include>
+            <directory>app</directory>
+        </include>
+    </source>
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="DB_DATABASE" value="devfinder_test" force="true"/>
+        <env name="CACHE_STORE" value="array"/>
+        <env name="SESSION_DRIVER" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="LOG_CHANNEL" value="null" force="true"/>
+    </php>
+</phpunit>

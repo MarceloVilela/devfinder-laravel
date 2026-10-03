@@ -1,6 +1,6 @@
 # 0006 — Sem Repository genérico
 
-- **Status**: proposta
+- **Status**: **aceita** pelo usuário em 2026-10-03 (evidência: Fase 2a, evidência parcial; completa na Fase 3)
 - **Contexto**: o Eloquent já é a camada de acesso; repositório genérico sobre ele é sinal de revisão negativo.
 - **Decisão**: Eloquent com scopes e objetos de consulta em `Queries/`. Repositório só com ADR própria.
 - **Alternativas**: Repository por entidade (o `transcript` usa; diverge de propósito).

@@ -1,0 +1,20 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/pestphp/pest/extension.neon
+
+parameters:
+    level: 9
+    paths:
+        - app
+        - bootstrap
+        - config
+        - database
+        - routes
+        - tests
+    ignoreErrors:
+        # Exceção pontual (sem baseline global): o PHPStan não liga `$this` dos closures do Pest ao TestCase
+        # do Laravel, então `$this->getJson()` etc. aparecem como método de TestCall. Só em tests/.
+        -
+            identifier: method.notFound
+            message: '#Call to an undefined method Pest\\PendingCalls\\TestCall::#'
+            path: tests
