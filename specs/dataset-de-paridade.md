@@ -28,8 +28,8 @@ Consequências conferidas no baseline do v1: `GET /devs` página 1 tem 30 itens 
 
 1. **Mesmo estado inicial dos dois lados** e **mesma ordem de execução** dos `.http`. As escritas alteram o
    banco: recriar o banco e a fixture (`migrate:refresh` + seed) antes de cada rodada.
-2. **Normalizar antes de comparar**: `_id`/`channel_id`/ids em arrays (o v1 devolve inteiros; o `php-laravel` devolve
-   string por D-7: converter o id do v1 para string), `createdAt`/`updatedAt` (o v1 usa `+00:00`), tempos de resposta e a ordem de
+2. **Normalizar antes de comparar**: `_id`/`channel_id`/ids em arrays (o v1 devolve inteiros e o `php-laravel` UUIDv7 em string, D-7 e D-10: **não comparam por valor**;
+   o normalizador troca cada id pela chave natural da entidade: `user` do dev, `name` do canal, id do YouTube do vídeo), `page`/`totalPages` (D-11, só no `php-laravel`), `createdAt`/`updatedAt` (o v1 usa `+00:00`), tempos de resposta e a ordem de
    chaves. O script de normalização fica em `specs/tools/` (Fase 2a).
 3. **Fora do diff** (sem oráculo v1): `GET /search`, `GET /feed/subscriptions`. Elas são validadas contra o contrato.
 4. **Casos que chamam serviço externo** (`POST /devs` com `octocat`, `POST /channels` com `userGithub`): usam o

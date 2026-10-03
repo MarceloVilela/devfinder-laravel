@@ -393,7 +393,7 @@ Mongo usa 3 coleções com arrays embutidos; o v1 normalizou em MySQL. Aqui o po
 | Formato dos `id` expostos | **string** (D-7, aprovada em 2026-10-02): o contrato e o frontend dizem string; o v1 devolve inteiro. O id interno pode seguir inteiro ou virar ULID/UUID; o JSON sempre expõe string | O v1 expõe inteiro, então o G3 normaliza |
 | Busca (`GET /search`) | `ILIKE` simples, `pg_trgm`, full-text do Postgres | Medir no dump real (500 vídeos, 186 canais, 40 devs no v1); não otimizar além da escala |
 | Likes/follows | tabela de junção com chave composta; contagem por `COUNT` | Idempotência com `INSERT … ON CONFLICT DO NOTHING` |
-| Paginação | `page`/`limit` do contrato; comportamento **fora do intervalo** definido (o `Pager` do CI4 fazia clamp) | Registrar o comportamento, não herdar por acaso |
+| Paginação | só `page` no contrato (30 fixo, sem `limit`); comportamento **fora do intervalo** definido (o `Pager` do CI4 fazia clamp) | Registrar o comportamento, não herdar por acaso |
 | Tipos | `timestamptz`, `bigint` ou `uuid`, `jsonb` só se justificado | Tipos estáveis no JSON (o v1 teve string vs. inteiro no MySQLi) |
 | Índices | um por consulta do contrato, justificado pela query | Sem índice "por via das dúvidas" |
 
