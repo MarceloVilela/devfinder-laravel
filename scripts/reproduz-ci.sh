@@ -16,7 +16,8 @@ git ls-files -z --cached --others --exclude-standard | grep -zv '^vendor/' | xar
 docker network create "$NET" >/dev/null
 docker run -d --name "$PG" --network "$NET" -e POSTGRES_USER=devfinder -e POSTGRES_PASSWORD=devfinder \
   -e POSTGRES_DB=devfinder_test postgres:18-alpine >/dev/null
-until docker exec "$PG" pg_isready -U devfinder >/dev/null 2>&1; do sleep 1; done
+# TCP em 127.0.0.1: durante a inicialização o postgres só escuta no socket unix, e o `pg_isready` mente (reinicia depois)
+until docker exec "$PG" psql -h 127.0.0.1 -U devfinder -d devfinder_test -c "select 1" >/dev/null 2>&1; do sleep 1; done
 # O workflow usa 1 banco só; o phpunit.xml aponta os testes para devfinder_test: criamos os dois, como o workflow.
 docker exec "$PG" psql -U devfinder -d devfinder_test -c "CREATE DATABASE devfinder OWNER devfinder" >/dev/null
 

@@ -30,8 +30,8 @@
 |---|---|---|---|
 | 0 | Especificação, ADRs, oráculo v1 e critérios de revisão (inclui spike inicial S1–S3) | M | **concluída em conteúdo** (2026-10-03); falta só o PR do `fase-0b-spike` (ver `specs/fase-0-especificacao.md`). Adiados por precisarem de esqueleto: ferramenta de contrato, DTO, teste de arquitetura, UI de `/docs` e ADRs 0005 a 0008 (Fase 2a) e ADR 0004 (Fase 2b) |
 | 1 | Modelo de dados (PostgreSQL) e orçamentos de query | M | **concluída** (PR #3 mergeado em 2026-10-03) |
-| 2a | Esqueleto local: qualidade, CI, teste de arquitetura, erros, `/docs` e `config:check` | M | **em execução** (branch `fase-2a-esqueleto-local`; ver `specs/fase-2a-esqueleto-local.md`) |
-| 2b | Esqueleto na nuvem: Bref + Neon + deploy + guardrails de custo + spikes S4 a S7 (gate G0) | L | pendente |
+| 2a | Esqueleto local: qualidade, CI, teste de arquitetura, erros, `/docs` e `config:check` | M | **concluída** (PR #4 mergeado em 2026-10-03) |
+| 2b | Esqueleto na nuvem: Bref + Neon + deploy + guardrails de custo + spikes S4 a S7 (gate G0) | L | **implementada, aguardando PR** (branch `fase-2b-esqueleto-nuvem`, `specs/fase-2b-esqueleto-nuvem.md`): deploy real feito e verificado; pendentes o OIDC de ponta a ponta (só roda na `main`), a validação da política da role e a ADR 0004 |
 | 3 | Endpoints públicos de leitura | M | pendente |
 | 4 | Autenticação (GitHub OAuth + JWT) | M | pendente |
 | 5 | Endpoints autenticados de escrita e relacionamento | M | pendente |

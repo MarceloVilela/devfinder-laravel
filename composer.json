@@ -7,6 +7,9 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "bref/bref": "^3.0",
+        "bref/laravel-bridge": "^3.1",
+        "bref/secrets-loader": "^1.2",
         "laravel/framework": "^13.17",
         "laravel/tinker": "^3.0"
     },

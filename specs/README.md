@@ -18,4 +18,5 @@ Metodologia: ver [`../plan.md`](../plan.md). Spec antes do código; um PR por fa
 | [`spikes/`](./spikes/s1-laravel-bref.md) | resultados medidos do spike S1–S4 e S7 (S5 e S6 parciais) e `2a-ferramentas.md` (contrato, arquitetura, DTO, Scramble), 2026-10-03 |
 | [`fase-1-modelo-de-dados.md`](./fase-1-modelo-de-dados.md) | **aprovada** (2026-10-03), ADR 0012 aceita; evidência em `fase-1-validacao.sql`/`.log`; migrations em `../database/migrations/` |
 | [`fase-2a-esqueleto-local.md`](./fase-2a-esqueleto-local.md) | spec da Fase 2a; evidência em `execucao-fase-2a.log` e `spikes/2a-ferramentas.md` (Gesso, Pest `arch()`, DTO `readonly`, Scramble) |
-| `fase-2b-*.md` em diante | não escritos |
+| [`fase-2b-esqueleto-nuvem.md`](./fase-2b-esqueleto-nuvem.md) | spec da Fase 2b; evidência local em `execucao-fase-2b.log` e `spikes/s5-s6-fase-2b.md`; `teardown.md` (rascunho) e `iam/` (política da role de deploy, **ainda não validada por deploy**) |
+| `fase-3-*.md` em diante | não escritos |

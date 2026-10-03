@@ -1,0 +1,253 @@
+# Execução da Fase 2b — 2026-10-03. Seções 1 a 7: só o que roda SEM tocar a conta. Seções 8 a 14: ações na conta, autorizadas pelo usuário (saída com id da conta, URL da função e e-mail ocultos; nenhum segredo)
+
+## 1. CI reproduzido (scripts/reproduz-ci.sh, container limpo, PostgreSQL 18 novo)
+==== gera .env do CI (só as chaves que o workflow define)
+==== composer validate --strict
+==== composer install
+==== composer audit
+==== chave da aplicação
+==== pint --test
+==== larastan nível 9 (sem baseline)
+==== config:check
+==== migrate e rollback e migrate (reversível)
+==== paridade de rotas: nada registrado fora do contrato
+==== pest (Feature, Contract, Arch)
+  Tests:    38 passed (89 assertions)
+==================================================
+CI PHP OK
+exit=0
+
+## 2. Pacote do Lambda + allowlist (scripts/reproduz-package.sh, sem credenciais da AWS)
+Installing dependencies from lock file
+Verifying lock file contents can be installed on current platform.
+Package operations: 98 installs, 0 updates, 0 removals
+Generating optimized autoload files
+> Illuminate\Foundation\ComposerScripts::postAutoloadDump
+> @php artisan package:discover --ansi
+   INFO  Discovering packages.  
+  bref/laravel-bridge ................................................... DONE
+  bref/laravel-health-check ............................................. DONE
+  nesbot/carbon ......................................................... DONE
+66 packages you are using are looking for funding.
+Use the `composer fund` command to find out more!
+Packaging devfinder-laravel for stage prod (us-east-2)
+✔ Service packaged (9s)
+-rw-rw-r-- 1 marcelo marcelo 16815247 Oct  3 13:54 .serverless/devfinder-laravel.zip
+tamanho descompactado:  93497656                     10794 files
+allowlist OK (8 tipos permitidos)
+recursos do template:
+   AWS::S3::Bucket ServerlessDeploymentBucket
+   AWS::S3::BucketPolicy ServerlessDeploymentBucketPolicy
+   AWS::Logs::LogGroup WebLogGroup
+   AWS::IAM::Role IamRoleLambdaExecution
+   AWS::Lambda::Function WebLambdaFunction
+   AWS::Lambda::Version WebLambdaVersionNZmK3ZaR4KEqX7SKntKUOojQcC85g2KZccEjTNBP8
+   AWS::Lambda::Url WebLambdaFunctionUrl
+   AWS::Lambda::Permission WebLambdaPermissionFnUrl
+   AWS::Lambda::Permission WebLambdaPermissionFn
+exit=0
+
+## 3. Testes da allowlist (reprova RDS, NAT, API Gateway, Secrets Manager, log sem retenção, segredo em texto, APP_DEBUG, CORS *)
+✔ template permitido passa (2.865854ms)
+✔ RDS é reprovado (0.71064ms)
+✔ NAT Gateway é reprovado (0.447873ms)
+✔ API Gateway é reprovado (1.225813ms)
+✔ Secrets Manager é reprovado (1.054377ms)
+✔ log group sem retenção é reprovado (0.53533ms)
+✔ log group com retenção longa é reprovado (0.420278ms)
+✔ APP_KEY em texto é reprovada (0.503185ms)
+✔ URL de banco com senha em texto é reprovada (0.463451ms)
+✔ chave AWS em texto é reprovada (0.487872ms)
+✔ sem templates é reprovado (0.329188ms)
+✔ APP_DEBUG ligado é reprovado (0.341441ms)
+✔ APP_ENV diferente de production é reprovado (0.32354ms)
+✔ CORS com curinga é reprovado (0.431935ms)
+ℹ tests 14
+ℹ pass 14
+ℹ fail 0
+
+## 4. Simulação de produção local (scripts/smoke-local-prod.sh: composer --no-dev, APP_ENV=production, DB_URL único)
+Installing dependencies from lock file
+Verifying lock file contents can be installed on current platform.
+Package operations: 98 installs, 0 updates, 0 removals
+Generating optimized autoload files
+> Illuminate\Foundation\ComposerScripts::postAutoloadDump
+> @php artisan package:discover --ansi
+66 packages you are using are looking for funding.
+Use the `composer fund` command to find out more!
+Configuração completa: APP_KEY, DB_URL, CORS_ALLOWED_ORIGINS
+ok   GET /health responde 200
+ok   resposta tem X-Request-Id
+ok   GET /v1 devolve o AppInfo do contrato
+ok   X-Request-Id seguro é reaproveitado
+ok   CORS libera a origem configurada
+ok   CORS não usa curinga
+ok   CORS não envia Allow-Credentials
+ok   CORS não ecoa origem desconhecida
+ok   rota inexistente dá 404
+ok   404 no formato do contrato
+ok   erro não contém 'stack'
+ok   erro não contém 'trace'
+ok   erro não contém '/var/task'
+ok   erro não contém 'vendor/'
+ok   erro não contém 'Illuminate'
+ok   erro não contém '\.php'
+ok   GET /docs/openapi.yaml responde 200
+ok   GET /health/db responde ok
+SMOKE OK
+
+## 5. O smoke test reprova de verdade (origem CORS errada; exit sem pipe)
+FAIL CORS libera a origem configurada (não achei '^access-control-allow-origin: https://outra.example.test')
+SMOKE FALHOU
+
+## 6. Inventário de custo, SOMENTE LEITURA (scripts/custo.sh); conta limpa antes do primeiro deploy
+== conta <ACCOUNT_ID>, região us-east-2, de 2026-09-26 a 2026-10-04
+== custo por serviço (UnblendedCost, líquido de crédito NÃO: bruto por Type=DIMENSION)
+Tax	0
+AWS Lambda	0
+AWS Lambda	0
+AWS Key Management Service	0
+AWS Key Management Service	0
+AWS Glue	0
+AWS Glue	0
+AWS Data Transfer	-0.0000000017
+Amazon Simple Storage Service	0.0000000012
+Amazon Simple Storage Service	0.0000000002
+Amazon DynamoDB	0
+Amazon DynamoDB	0
+AmazonCloudWatch	0
+AmazonCloudWatch	0
+== orçamentos
+Orcamento USD 0,01	1.0	0.0
+== stacks vivas em us-east-2
+== recursos da stack devfinder-laravel-prod (tudo precisa estar na allowlist: scripts/allowlist.cjs)
+aws: [ERROR]: An error occurred (ValidationError) when calling the DescribeStackResources operation: Stack with id devfinder-laravel-prod does not exist
+== funções Lambda, memória e arquitetura
+== limite de concorrência da conta
+{
+    "limite": 10,
+    "semReserva": 10
+}
+== log groups e retenção (None = nunca expira = vazamento de custo)
+== invocações e concorrência máxima da função nas últimas 24 h
+Invocations: None
+ConcurrentExecutions: None
+== buckets S3 do projeto
+== recursos que NUNCA devem existir (se algo aparecer abaixo, é incidente de custo)
+
+## 7. Plano do bootstrap (scripts/aws-bootstrap.sh SEM --apply: só imprime)
+conta=<ACCOUNT_ID> região=us-east-2 role=devfinder-laravel-github-deploy apply=0
+[plano] aws iam create-open-id-connect-provider --url https://token.actions.githubusercontent.com --client-id-list sts.amazonaws.com
+[plano] aws iam create-role --role-name devfinder-laravel-github-deploy --assume-role-policy-document file://TMP/deploy-role-trust.json --description Depl
+[plano] aws iam put-role-policy --role-name devfinder-laravel-github-deploy --policy-name deploy --policy-document file://TMP/deploy-role.json
+[plano] aws budgets create-budget --account-id <ACCOUNT_ID> --budget file://TMP/budget.json --notifications-with-subscribers file://TMP/no
+
+Depois: no GitHub, Settings > Secrets and variables > Actions:
+  variável AWS_DEPLOY_ROLE_ARN = arn:aws:iam::<ACCOUNT_ID>:role/devfinder-laravel-github-deploy   (não é segredo)
+  secret   DIRECT_DATABASE_URL = URL direta do Neon (só para o migrate)
+
+# --- Parte 2: ações na conta, autorizadas pelo usuário em 2026-10-03 ("todas" + deploy + medição) ---
+
+## 8. scripts/aws-bootstrap.sh --apply (provedor OIDC, role, política e 2º orçamento criados; saída resumida)
+provedor OIDC token.actions.githubusercontent.com: criado
+role devfinder-laravel-github-deploy: criada (confiança: repo:MarceloVilela/devfinder-laravel:ref:refs/heads/main)
+$ aws budgets describe-budgets (nome, limite, inclui crédito)
+Orcamento USD 0,01	1.0	True  (já existia)
+devfinder-laravel-consumo-bruto	1.0	False  (criado agora)
+
+## 9. Neon (PostgreSQL 18.6): antes e depois do migrate (URL direta; nada de URL ou senha aqui)
+antes: schema public vazio; extensões instaladas: plpgsql; disponíveis: pg_trgm, unaccent; uuidv7() responde (ex.: 01a102f2-...-7...)
+migrate: 9 migrations DONE (cache, norm_text, devs, channels, tags, channel_tag, videos, dev_reactions, channel_reactions)
+depois: norm_text('Educação AÇÃO') = educacao acao; extensões = pg_trgm,plpgsql,unaccent; 10 tabelas no public; 3 índices GIN
+unique em norm_text: inserir 'dév01' com 'Dev01' existente -> ERROR duplicate key ... devs_username_norm_unique (esperado)
+
+## 10. SSM: parâmetros gravados como SecureString, tier Standard (valores nunca impressos)
+/devfinder-laravel/prod/app-key	SecureString	Standard
+/devfinder-laravel/prod/db-url	SecureString	Standard
+
+## 11. osls deploy --stage prod (osls 4.4.0)
+Deploying devfinder-laravel to stage prod (us-east-2)
+✔ Service deployed to stack devfinder-laravel-prod (94s)
+endpoint: https://<id>.lambda-url.us-east-2.on.aws/
+functions:
+  web: devfinder-laravel-prod-web (17 MB)
+Want a better experience than the AWS console? Try out https://bref.sh/cloud
+exit=0
+
+## 12. Smoke test contra o deploy real (BASE_URL = Function URL; FUNCTION_NAME confere a configuração viva)
+ok   GET /health responde 200
+ok   resposta tem X-Request-Id
+ok   GET /v1 devolve o AppInfo do contrato
+ok   X-Request-Id seguro é reaproveitado
+ok   CORS libera a origem configurada
+ok   CORS não usa curinga
+ok   CORS não envia Allow-Credentials
+ok   CORS não ecoa origem desconhecida
+ok   rota inexistente dá 404
+ok   404 no formato do contrato
+ok   erro não contém 'stack'
+ok   erro não contém 'trace'
+ok   erro não contém '/var/task'
+ok   erro não contém 'vendor/'
+ok   erro não contém 'Illuminate'
+ok   erro não contém '\.php'
+ok   GET /docs/openapi.yaml responde 200
+ok   GET /health/db responde ok
+ok   função: APP_DEBUG=false
+ok   função: APP_ENV=production
+ok   função: segredos só como bref-ssm: (sem texto)
+SMOKE OK
+
+## 13. Inventário depois do deploy (scripts/custo.sh, somente leitura)
+== stacks vivas em us-east-2
+devfinder-laravel-prod	UPDATE_COMPLETE
+== recursos da stack devfinder-laravel-prod (tudo precisa estar na allowlist: scripts/allowlist.cjs)
+AWS::IAM::Role	IamRoleLambdaExecution
+AWS::S3::Bucket	ServerlessDeploymentBucket
+AWS::S3::BucketPolicy	ServerlessDeploymentBucketPolicy
+AWS::Lambda::Function	WebLambdaFunction
+AWS::Lambda::Url	WebLambdaFunctionUrl
+AWS::Lambda::Permission	WebLambdaPermissionFn
+AWS::Lambda::Permission	WebLambdaPermissionFnUrl
+AWS::Lambda::Version	WebLambdaVersionNZmK3ZaR4KEqX7SKntKUOojQcC85g2KZccEjTNBP8
+AWS::Logs::LogGroup	WebLogGroup
+== funções Lambda, memória e arquitetura
+devfinder-laravel-prod-web	provided.al2023	1024	x86_64
+== limite de concorrência da conta
+{
+    "limite": 10,
+    "semReserva": 10
+}
+== log groups e retenção (None = nunca expira = vazamento de custo)
+/aws/lambda/devfinder-laravel-prod-web	7	0
+== invocações e concorrência máxima da função nas últimas 24 h
+Invocations: 103.0
+ConcurrentExecutions: 1.0
+== buckets S3 do projeto
+devfinder-laravel-prod-serverlessdeploymentbucket-<sufixo>
+== recursos que NUNCA devem existir (se algo aparecer abaixo, é incidente de custo)
+
+## 14. Latência (G1), cliente no Brasil -> us-east-2; tempos do SERVIDOR vêm das linhas REPORT do CloudWatch
+cliente, 30 requisições quentes (curl, conexão nova a cada uma, inclui TLS e rede):
+  /health    p50=534 ms p95=654 ms | /v1 p50=538 ms p95=665 ms | /health/db p50=577 ms p95=666 ms
+servidor, 107 invocações quentes (mistura /health, /v1, /health/db): p50=8,4 ms p95=46,7 ms max=99,9 ms; /health e /v1 ~7 ms; /health/db 29-55 ms
+servidor, Lambda frio (sem banco): Init=1362 ms + Duration=280 ms = 1,64 s; memória máxima usada 146 MB de 1024 MB
+cliente, 1ª requisição fria /health: 2,75 s
+---- medições de /tmp/g1.sh (cliente) ----
+2026-10-03T18:12:08Z
+# espera 400 s (compute do Neon suspende após ~300 s ocioso; Lambda segue quente)
+neon frio, lambda quente: /health/db
+200 total=3.486620s ttfb=3.486454s
+neon quente, lambda quente: /health/db
+200 total=0.617051s ttfb=0.616856s
+# espera 1500 s (Lambda e Neon frios)
+lambda frio + neon frio: /health/db
+200 total=3.255373s ttfb=3.255139s
+lambda quente + neon quente: /health/db
+200 total=0.571298s ttfb=0.571048s
+2026-10-03T18:43:56Z
+FIM
+---- REPORT das requisições dessas rodadas (servidor) ----
+18:18:51 Duration=934 ms Init=1240 ms   (Lambda FRIO e Neon frio; o Lambda já tinha sido reciclado em ~7 min)
+18:43:55 Duration=897 ms Init=1245 ms   (Lambda frio e Neon frio, após 25 min)
+18:18:52 Duration=42 ms | 18:43:56 Duration=40 ms   (tudo quente: /health/db)

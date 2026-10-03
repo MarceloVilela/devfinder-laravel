@@ -36,6 +36,6 @@ final class ConfigKeys
     {
         $value = $this->config->get($key);
 
-        return $value !== null && $value !== '';
+        return $value !== null && $value !== '' && $value !== [];
     }
 }

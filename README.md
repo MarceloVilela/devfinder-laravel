@@ -3,8 +3,9 @@
 API do DevFinder em **Laravel + PostgreSQL (Neon) em AWS Lambda via Bref**, com o mesmo contrato público de
 `devfinder-api` e custo zero. Reescrita do `php-codei` (CodeIgniter 4 + MySQL).
 
-**Estado**: Fase 2a (esqueleto local) em andamento. Há esqueleto Laravel com `/health`, `/health/db`, `/docs` e `GET /v1`, CI e
-migrations; **nenhuma regra de domínio, deploy nem demo ainda**.
+**Estado**: Fase 2b (esqueleto na nuvem). Há esqueleto Laravel com `/health`, `/health/db`, `/docs` e `GET /v1`, CI, migrations e um
+deploy real (Lambda + Function URL + Neon) verificado por smoke test; **nenhuma regra de domínio ainda**. O deploy foi feito à mão;
+o deploy automático por OIDC só roda depois do merge na `main`.
 
 - Plano: [`plan.md`](./plan.md)
 - Estado das specs: [`specs/README.md`](./specs/README.md)
@@ -24,6 +25,7 @@ scripts/reproduz-ci.sh            # o CI inteiro, em container limpo
 
 ## Limitações conhecidas (até agora)
 
-- Nenhuma medição de latência, cold start ou custo foi feita.
+- Latência medida no deploy real (`specs/spikes/g1-latencia-deploy-real.md`): quente com banco p95 51 ms; Lambda e Neon frios ≈ 2,2 s; **Lambda frio sem banco 1,64 s, acima da meta de 1,5 s**. O custo medido é o do Cost Explorer, que atrasa horas.
+- **Sem defesa de infraestrutura contra abuso volumétrico**: a conta AWS tem limite de concorrência 10 e não permite concorrência reservada, e a Function URL não tem WAF nem throttling. Sobram o rate limiting da aplicação (Fase 4) e o alarme de custo.
 - O oráculo de paridade (v1) cobre 27 das 30 operações do contrato.
 - O Free Plan da AWS encerra a conta ao expirar; a decisão de fim de vida ainda não foi tomada.

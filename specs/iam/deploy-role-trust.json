@@ -1,0 +1,17 @@
+{
+  "_comentario": "Confiança da role de deploy: só este repositório e só a branch main (OIDC). <ACCOUNT_ID> é trocado por scripts/aws-bootstrap.sh.",
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {"Federated": "arn:aws:iam::<ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com"},
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+          "token.actions.githubusercontent.com:sub": "repo:MarceloVilela/devfinder-laravel:ref:refs/heads/main"
+        }
+      }
+    }
+  ]
+}
