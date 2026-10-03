@@ -28,7 +28,7 @@
 
 | Fase | Nome | Tamanho (estimativa relativa) | Status |
 |---|---|---|---|
-| 0 | Especificação, ADRs, oráculo v1 e critérios de revisão (inclui spike inicial S1–S3) | M | **em execução** (ver `specs/fase-0-especificacao.md`) |
+| 0 | Especificação, ADRs, oráculo v1 e critérios de revisão (inclui spike inicial S1–S3) | M | **concluída em conteúdo** (2026-10-03); falta só o PR do `fase-0b-spike` (ver `specs/fase-0-especificacao.md`). Adiados por precisarem de esqueleto: ferramenta de contrato, DTO, teste de arquitetura, UI de `/docs` e ADRs 0005 a 0008 (Fase 2a) e ADR 0004 (Fase 2b) |
 | 1 | Modelo de dados (PostgreSQL) e orçamentos de query | M | pendente |
 | 2a | Esqueleto local: qualidade, CI, teste de arquitetura, erros, `/docs` e `config:check` | M | pendente |
 | 2b | Esqueleto na nuvem: Bref + Neon + deploy + guardrails de custo + spikes S4 a S7 (gate G0) | L | pendente |
@@ -369,9 +369,14 @@ Regras de dependência, **verificadas por teste de arquitetura** (G4):
 | Documentos do projeto | Criar `CLAUDE.md` (stack, regra de custo reformulada, lições herdadas, regras de commit e PR), `CLAUDE.local.md` (não versionado), `README.md`, `.gitignore` (inclui `**/*__.*` e `*.private.*`) e `specs/README.md`; documentos `__` ficam locais e **nenhum arquivo versionado os referencia**; conferir toda referência cruzada |
 | Dados de teste | O dump real está em `../php-codei/specs/seed/` (**gitignored**, risco de marca e LGPD documentado); usá-lo só por caminho relativo, **sem copiar para este repositório**; definir um seed sintético mínimo versionado |
 
-**Critério de aceite**: specs e ADRs aprovados; spike inicial S1–S3 com resultado; toda operação do OpenAPI com pelo menos um caso de
-aceite; ferramenta de contrato escolhida com evidência; `CLAUDE.md` sem referência quebrada; commit de
-referência do v1 registrado; repositório com `main` e remoto criados; dataset de paridade definido. PR `fase-0-especificacao → main` mergeado.
+**Critério de aceite**: specs e ADRs aprovados (as que dependem de esqueleto, ver abaixo, ficam como `proposta`); spike inicial S1–S3 com
+resultado; toda operação do OpenAPI no escopo com pelo menos um caso de aceite; `CLAUDE.md` sem referência quebrada; commit de
+referência do v1 registrado; repositório com `main` e remoto criados; dataset de paridade definido. PRs da Fase 0 mergeados.
+
+**Adiado para depois do esqueleto** (decisão do usuário, 2026-10-03: "a Fase 2 envolve esqueleto"): a **ferramenta de contrato** (Spectator,
+`laravel-openapi-validator` ou Gesso), a escolha de **DTO**, do **teste de arquitetura** (Pest `arch()` ou PHPat), da **UI de `/docs`** e do
+**Scramble** passam a ser entregáveis da **Fase 2a**; as **ADRs 0005 a 0008** são aceitas na 2a, com o código real; a **ADR 0004** (Function
+URL, defesa contra abuso) é aceita na **Fase 2b**.
 
 **Riscos**: o oráculo do v1 indisponível (mitigação acima); o escopo da auditoria crescer
 (limitar a rotas do OpenAPI).
@@ -413,6 +418,9 @@ evitados, e onde os riscos de D1–D4 são medidos. Dividida em **2a** (tudo o q
 - Laravel na raiz de `./php-laravel` (`composer create-project`), sem subpasta.
 - Qualidade: Pint com `strict_types` e preset PER, Larastan (meta nível 9, sem baseline global), Pest,
   `composer validate --strict` e `composer audit`; `preventLazyLoading` fora de produção.
+- **Escolhas adiadas da Fase 0, decididas aqui com exemplo real**: ferramenta de contrato (**uma** entre Spectator, `laravel-openapi-validator` e
+  Gesso, cada candidata validada com um teste real), DTO (`readonly` próprio ou `spatie/laravel-data`), UI de `/docs` e Scramble. Cada escolha
+  vira evidência em `specs/spikes/` e atualiza a ADR correspondente; ao fim, as **ADRs 0005 a 0008 passam a `aceita`**.
 - **Teste de arquitetura** (Pest `arch()` ou PHPat) com as regras da seção 6, no CI desde este PR, sobre a
   estrutura de features vazia (`Health` como única feature).
 - **Handler global de erros** (D8) e **UI do contrato em `/docs`** (D7) já no esqueleto, com um teste de
@@ -423,7 +431,8 @@ evitados, e onde os riscos de D1–D4 são medidos. Dividida em **2a** (tudo o q
 - `config:check` + log de boot com os nomes das chaves presentes.
 - **Logs JSON com id de requisição** (sem dado sensível) já no esqueleto, e `ci.yml` (PR) com todos os gates.
 - **Critério de aceite 2a**: CI verde **reproduzido byte a byte**; `docker compose up` local; teste de
-  arquitetura falhando de propósito num PR de teste (prova de que protege); PR mergeado.
+  arquitetura falhando de propósito num PR de teste (prova de que protege); ferramenta de contrato escolhida com evidência e ADRs 0005 a
+  0008 aceitas; PR mergeado.
 
 **Fase 2b — entregáveis (PR `fase-2b-esqueleto-nuvem`)**
 
@@ -448,11 +457,16 @@ evitados, e onde os riscos de D1–D4 são medidos. Dividida em **2a** (tudo o q
 | S6 | Function URL vs HTTP API: custo e limites reais (sem throttling, sem WAF)? A conta **permite** concorrência reservada (o limite de contas novas pode impedir)? Qual valor protege Neon e crédito? | Custo observado no Cost Explorer (lembrar do atraso de cobrança) e limite definido | Adotar HTTP API (cobra do crédito) ou rever D4; sem reserva possível, rate limiting e alarme viram a única defesa e isso vai para o README |
 | S7 | Qual **store** faz o rate limiting funcionar entre instâncias do Lambda, dentro da allowlist e do orçamento de conexões? | Teste que dispara 429 no limite, a frio e a quente, com custo de query medido | Tabela de cache no Postgres com limite baixo; ou aceitar a limitação por ADR e documentá-la |
 
+**Resultados já medidos na Fase 0** (`specs/spikes/`): S1 a S4 e S7 rodaram; S5 e S6 parciais (o `osls` dispensa login do Serverless; a conta tem
+limite de concorrência 10 e **não permite reservar**; o cache `array` não limita, o cache em tabela do Postgres sim, ver ADR 0011). OIDC e a role
+de escopo mínimo do CI seguem para a Fase 2b.
+
 Observação sobre o Neon: o plano gratuito tem um teto de horas de computação por mês; manter o banco
 sempre acordado com ping periódico pode consumir esse teto antes do fim do mês (conta a fazer no S3
 com os números atuais da conta, não com os desta pesquisa).
 
-**Critério de aceite 2b**: gate **G0** — S1 a S7 resolvidos com medição; deploy real respondendo
+**Critério de aceite 2b**: gate **G0** — S1 a S7 resolvidos com medição; **ADR 0004 aceita** (Function URL com a defesa contra abuso decidida,
+dado que a conta não permite concorrência reservada, ADR 0011); deploy real respondendo
 `GET /health` e `GET /health/db`; Budgets ativo; allowlist falhando de propósito num PR de teste (prova
 de que protege); asserções do smoke test (`APP_DEBUG`, CORS, sem stack trace) verdes; PR mergeado.
 

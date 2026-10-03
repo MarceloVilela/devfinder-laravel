@@ -1,6 +1,6 @@
 # 0002 — PostgreSQL no Neon
 
-- **Status**: proposta
+- **Status**: **aceita** pelo usuário em 2026-10-03 (evidência: `specs/spikes/s2-pdo-pgsql-neon.md`, `s3-cold-start.md`, `s4-pooler-conexoes.md`)
 - **Contexto**: precisa de banco relacional gratuito, acessível de fora de VPC (sem NAT nem RDS).
 - **Decisão**: PostgreSQL no Neon (plano gratuito). URL **pooled** no runtime e URL **direta** nas migrations.
 - **Alternativas**: Supabase (fallback); RDS (gasta crédito); MySQL/TiDB (o do v1).

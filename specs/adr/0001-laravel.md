@@ -1,6 +1,6 @@
 # 0001 — Laravel e PHP
 
-- **Status**: proposta
+- **Status**: **aceita** pelo usuário em 2026-10-03 (evidência: `specs/spikes/s1-laravel-bref.md`; versão exata na ADR 0009)
 - **Contexto**: o v1 usou CodeIgniter 4. Bref tem guia próprio de Laravel e o ecossistema de
   qualidade (Pint, Larastan, Pest) e de contrato de API é maior.
 - **Decisão**: Laravel na versão estável vigente; versão exata e PHP fixados na ADR 0009 depois do spike.

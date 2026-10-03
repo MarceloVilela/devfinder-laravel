@@ -1,8 +1,10 @@
 # Fase 0 — Especificação, ADRs, oráculo v1 e critérios de revisão — Registro de execução
 
 > Referência: [`../plan.md`](../plan.md), seção 7, Fase 0.
-> Status: **em execução** (iniciada em 2026-10-02, branch local `fase-0-especificacao`, sem commit).
-> Nada aqui foi medido contra AWS ou Neon: **o spike inicial S1–S3 ainda não rodou**, então toda ADR é `proposta`.
+> Status: **concluída em conteúdo em 2026-10-03** (iniciada em 2026-10-02). O PR #1 (`fase-0-especificacao`) foi mergeado; o trabalho do
+> spike, das ADRs aceitas e desta atualização está no branch `fase-0b-spike`, **sem commit nem PR** (só a pedido do usuário).
+> O spike S1–S4 e S7 rodou contra AWS e Neon (`spikes/`). Seis ADRs aceitas (0001, 0002, 0003, 0009, 0010, 0011). Adiado para a Fase 2a:
+> ferramenta de contrato, DTO, teste de arquitetura, UI de `/docs` e ADRs 0005 a 0008; para a 2b: ADR 0004.
 
 ## Feito (verificável nos arquivos)
 
@@ -42,8 +44,8 @@
 
 ## Pendente (não feito)
 
-- [ ] **Spike inicial S1–S3** (Laravel + Bref no Lambda; `pdo_pgsql` no Neon; cold start). Exige AWS e Neon.
-- [ ] Preencher a ADR 0009 (PHP, Laravel, Bref, região) com o resultado do spike.
+- [x] **Spike inicial S1–S3** (e S4 e S7 antecipados): feito em 2026-10-03, resultados em `spikes/s1..s4`, `s7` e `s5-s6-achados-parciais.md`; ADR 0011 (rate limiting) proposta.
+- [x] ADR 0009 preenchida (PHP 8.4, Laravel 13, Bref 3, `us-east-2`) e **aceita** pelo usuário em 2026-10-03; ADR 0011 (rate limiting) também aceita.
 - [x] Rodar os `.http` contra o v1 local: feito em 2026-10-02, `acceptance/execucao-v1-baseline.log` (status das 62
       requisições; só 2 divergem do esperado, as de `/feed/subscriptions`, rota inexistente no v1).
 - [x] **Revalidar o contrato** contra o v1: feito em 2026-10-02 com `tools/validate-contract.cjs` em modo estrito
@@ -51,23 +53,23 @@
       ids inteiros × string (A14), `null` sem `nullable` (A15) e as 2 rotas que o v1 não tem. **Resolvido**: D-8 aplicada
       no YAML (5 campos `nullable: true`, 2ª rodada sem nenhum null divergente) e D-7 decide que o `php-laravel` devolve
       string (o diff de ids some lá). Resta só 404 em `/search` e `/feed/subscriptions`, esperado no v1.
-- [ ] Escolher e testar com exemplo real: DTO, teste de arquitetura (Pest `arch()` ou PHPat), ferramenta de contrato
+- [ ] **Adiado para a Fase 2a** (decisão do usuário, 2026-10-03): escolher e testar com exemplo real: DTO, teste de arquitetura (Pest `arch()` ou PHPat), ferramenta de contrato
       (uma entre Spectator, laravel-openapi-validator, Gesso), UI de `/docs` e Scramble. Precisam do esqueleto Laravel.
 - [x] **Dataset de paridade** definido em `dataset-de-paridade.md` (35 devs, 3 canais, 3 tags, 55 vídeos, 4 reações,
       tudo sintético). O **seeder PHP** do `php-laravel` fica para a Fase 2a (precisa do esqueleto Laravel). O `.http`
       de ingestão foi reescrito sem dados reais de terceiros.
 - [x] Avaliar Context7 e skills de Laravel: `ferramentas-contexto.md` (cobertura confirmada pela API pública; MCP e
       skills **não** instalados nem testados).
-- [ ] Conferir toda referência cruzada de `CLAUDE.md`, `README.md` e `specs/README.md` contra os arquivos reais.
-- [ ] Commit inicial em `main` e push (só a pedido; remoto já criado pelo usuário).
+- [x] Referências cruzadas de `CLAUDE.md`, `README.md` e `specs/README.md` conferidas (2026-10-02); refazer ao fechar a fase.
+- [x] Commit inicial em `main` e push: feitos em 2026-10-02 (PR #1).
 
 ## Critério de aceite (de `plan.md`)
 
-- [ ] Specs e ADRs aprovados pelo usuário (decisões 1 a 5 dadas; as ADRs seguem `proposta` até a evidência dos spikes).
-- [ ] Spike inicial S1–S3 com resultado medido.
+- [x] Specs e ADRs aprovados pelo usuário: **aceitas 0001, 0002, 0003, 0009, 0010 e 0011** (2026-10-03). **Adiadas por decisão do usuário**: ADR 0004 para a Fase 2b (evidência parcial do S6: sem defesa contra abuso resolvida) e ADRs 0005 a 0008 para a Fase 2a (precisam do esqueleto Laravel).
+- [x] Spike inicial S1–S3 com resultado medido (`specs/spikes/`).
 - [x] Toda operação **no escopo** com pelo menos um caso de aceite: 29 de 29, conferido por script em 2026-10-02 (as requisições dos `.http` contra o OpenAPI). A cobertura herdada do v1 era de 27 de 30: faltavam `GET /` e `GET /search` (casos escritos agora em `app.http` e `search.http`); `POST /channels/refresh` está fora do escopo, sem caso. A frase anterior deste registro ("as 30 estão nos `.http`") estava errada.
-- [ ] Ferramenta de contrato escolhida com evidência.
-- [ ] `CLAUDE.md` sem referência quebrada.
-- [ ] Commit de referência do v1 registrado (**feito**: `3229c4c`).
-- [ ] Repositório com `main` e remoto; dataset de paridade definido.
-- [ ] PR `fase-0-especificacao → main` mergeado (só a pedido).
+- [x] ~~Ferramenta de contrato escolhida com evidência~~: **adiada para a Fase 2a** (decisão do usuário, 2026-10-03: a Fase 2 envolve o esqueleto).
+- [x] `CLAUDE.md` sem referência quebrada (conferido por script em 2026-10-02: links e arquivos citados existem).
+- [x] Commit de referência do v1 registrado (`3229c4c`).
+- [x] Repositório com `main` e remoto (`origin`, público); dataset de paridade definido.
+- [x] PR #1 `fase-0-especificacao → main` mergeado em 2026-10-02. **Pendente**: o trabalho do spike está em `fase-0b-spike`, sem commit nem PR.

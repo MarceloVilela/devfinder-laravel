@@ -1,6 +1,6 @@
 # 0010 — Regra de custo reformulada
 
-- **Status**: proposta
+- **Status**: **aceita** pelo usuário em 2026-10-03 (evidência parcial: custo US$ 0,00 de 1 a 3 de outubro, `specs/spikes/s5-s6-achados-parciais.md`)
 - **Contexto**: a regra do v1 exigia camada "genuinamente sempre-gratuita". O Free Plan atual da AWS
   (crédito por 6 meses) **encerra a conta** ao expirar (`../serverless/specs/aws-pending__.md`).
 - **Decisão**: custo zero **durante o Free Plan**, com decisão de fim de vida (upgrade ou teardown) até o dia 150.
