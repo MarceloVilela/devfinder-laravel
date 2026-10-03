@@ -1,0 +1,71 @@
+# Execução da Fase 3 — endpoints públicos de leitura (2026-10-03)
+# Ambiente local: docker compose (app :8082, PostgreSQL 18), dataset de paridade (35/3/3/55/2/2). v1 local (:8081, MySQL 8.4) recriado com migrate:refresh + AcceptanceSeeder.
+
+## 1. Gates (container limpo, .env gerado pelo workflow: scripts/reproduz-ci.sh)
+==== gera .env do CI (só as chaves que o workflow define)
+==== composer validate --strict
+==== composer install
+==== composer audit
+No security vulnerability advisories found.
+==== chave da aplicação
+==== pint --test
+    PASS   ......................................................... 106 files  
+==== larastan nível 9 (sem baseline)
+ [OK] No errors                                                                 
+==== config:check
+==== migrate e rollback e migrate (reversível)
+==== paridade de rotas: nada registrado fora do contrato
+==== pest (Feature, Contract, Arch)
+  Tests:    179 passed (444 assertions)
+==================================================
+EXIT=0
+
+## 2. G3 — diff normalizado v1 x php-laravel (rotas anônimas de leitura, 30 capturas)
+$ node specs/tools/capture-g3.cjs http://localhost:8081/v1 v1.json
+30 capturas em /tmp/g3/v1.json
+$ node specs/tools/capture-g3.cjs http://localhost:8082/v1 laravel.json
+30 capturas em /tmp/g3/laravel.json
+$ node specs/tools/normalize-g3.cjs v1.json laravel.json
+IGUAIS após a normalização
+exit=0
+status e content-type iguais nas 30 capturas
+status: {200: 30}
+
+## 3. Casos de aceite de /search (acceptance/search.http, ambiente local, httpyac)
+=== GET /search — termo que casa canal e vídeo ===
+=> 200 (33 ms)
+=== GET /search — sem resultado ===
+=> 200 (33 ms)
+=== GET /search — sem `q` (divergência D-1) ===
+=> 422 (9 ms)
+=== GET /search — metacaracteres de regex tratados como texto (divergência D-1) ===
+=> 200 (28 ms)
+=== GET /search — curinga de LIKE tratado como texto (divergência D-1) ===
+=> 200 (28 ms)
+=== GET /search — termo longo ===
+=> 422 (19 ms)
+=== GET /search — autenticado (auth opcional) ===
+=> 200 (34 ms)
+7 requests processed (7 succeeded)
+
+## 4. Corpos de /search com entrada hostil (curl)
+q=(a%2B)%2B%24 -> [] [200]
+q=%25 -> [] [200]
+q=_ -> [] [200]
+q=%27%20or%201%3D1%20-- -> [] [200]
+q=a%00b -> {"error":"Malformed input."} [400]
+q=%ff%fe -> {"error":"Malformed input."} [400]
+
+## 5. Não encontrado e %2F (curl)
+devs/nobody -> null [200]
+channels/nao-existe -> null [200]
+video/does-not-exist -> null [200]
+channels/https%3A%2F%2Fyoutube.com%2Falpha -> {"_id":"01a10375-1b24-7134-9375-ce04b1c9e8ce","name":"Canal Alpha","userGithub":null,"link":"https:\/\/youtube
+feed/channel?channel_name=NaoExiste -> {"docs":[],"total":0,"itemsPerPage":30,"page":1,"totalPages":1} [200]
+
+## 6. Latência local (30 requisições sequenciais por rota, ms; só referência, não é o G1)
+devs?page=1            p50=29 p95=58
+feed/trending          p50=31 p95=58
+channels               p50=30 p95=50
+search?q=Alpha         p50=28 p95=49
+video/vidalpha01       p50=30 p95=52

@@ -19,7 +19,8 @@ GET {{baseUrl}}/channels/Canal%20Alpha
 # Esperado: 200 (não 404) + corpo `null`.
 GET {{baseUrl}}/channels/nao-existe
 
-### Busca por link — funciona na query SQL, mas não é exercitável via este path
+### Busca por link — no php-laravel funciona (F3-5: a rota aceita `/` e `%2F` no segmento); no v1 não
+# Histórico do v1: funciona na query SQL, mas não é exercitável via este path
 # `ChannelModel::findByNameOrLink()` casa por `name` OU `link` OU `alternative_link` (ver
 # specs/fase-1-data-model.md, decisão 2) — a query em si suporta link. O que NÃO funciona é
 # passar um link inteiro (com `/`) como segmento de path, mesmo url-encoded (`%2F`): achado

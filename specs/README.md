@@ -19,4 +19,5 @@ Metodologia: ver [`../plan.md`](../plan.md). Spec antes do código; um PR por fa
 | [`fase-1-modelo-de-dados.md`](./fase-1-modelo-de-dados.md) | **aprovada** (2026-10-03), ADR 0012 aceita; evidência em `fase-1-validacao.sql`/`.log`; migrations em `../database/migrations/` |
 | [`fase-2a-esqueleto-local.md`](./fase-2a-esqueleto-local.md) | spec da Fase 2a; evidência em `execucao-fase-2a.log` e `spikes/2a-ferramentas.md` (Gesso, Pest `arch()`, DTO `readonly`, Scramble) |
 | [`fase-2b-esqueleto-nuvem.md`](./fase-2b-esqueleto-nuvem.md) | spec da Fase 2b; evidência local em `execucao-fase-2b.log` e `spikes/s5-s6-fase-2b.md`; `teardown.md` (rascunho) e `iam/` (política da role de deploy, **ainda não validada por deploy**) |
-| `fase-3-*.md` em diante | não escritos |
+| [`fase-3-leitura-publica.md`](./fase-3-leitura-publica.md) | spec da Fase 3 (decisões F3-1 a F3-10); evidência local em `execucao-fase-3.log`; G3 nulo nas rotas 1 a 9 |
+| `fase-4-*.md` em diante | não escritos |

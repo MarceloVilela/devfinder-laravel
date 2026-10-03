@@ -52,18 +52,20 @@ final class ParityDatasetSeeder extends Seeder
     {
         $base = Carbon::parse('2026-01-01 00:00:00', 'UTC');
         $defs = [
-            ['Canal Alpha', 'https://youtube.com/alpha', 'Tecnologia'],
-            ['Canal Beta', 'https://youtube.com/beta', 'Educação'],
-            ['Canal Zeta', 'https://youtube.com/zeta', 'Testes'],
+            ['Canal Alpha', 'https://youtube.com/alpha', 'Tecnologia', 'Canal sintético Alpha, usado nos casos de aceite.', 'alpha'],
+            ['Canal Beta', 'https://youtube.com/beta', 'Educação', 'Canal sintético Beta, usado nos casos de aceite.', 'beta'],
+            ['Canal Zeta', 'https://youtube.com/zeta', 'Testes', 'Canal sintético Zeta — sem vídeos nem reações de baseline, dedicado a testes de escrita (Fase 5).', 'zeta'],
         ];
         $ids = [];
 
-        foreach ($defs as $i => [$name, $link, $category]) {
+        foreach ($defs as $i => [$name, $link, $category, $description, $slug]) {
             $at = $base->copy()->addSeconds($i);
             $ids[$name] = (string) DB::table('channels')->insertGetId([
                 'name' => $name,
                 'link' => $link,
                 'category' => $category,
+                'description' => $description,
+                'avatar' => "https://example.test/avatar/canal-{$slug}.png",
                 'created_at' => $at,
                 'updated_at' => $at,
             ]);
@@ -105,7 +107,7 @@ final class ParityDatasetSeeder extends Seeder
                     'title' => "Vídeo {$label} {$nn}",
                     'url' => "https://www.youtube.com/watch?v={$youtubeId}",
                     'channel_id' => $channels["Canal {$label}"],
-                    'thumbnail' => "https://example.test/thumb/{$youtubeId}.jpg",
+                    'thumbnail' => "https://i.ytimg.com/vi/{$youtubeId}/hqdefault.jpg",
                     'created_at' => $at,
                     'updated_at' => $at,
                 ];

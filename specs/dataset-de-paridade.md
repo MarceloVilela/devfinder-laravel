@@ -8,16 +8,16 @@
 
 Descrição extraída dos seeders de acceptance do v1 (`app/Database/Seeds/Acceptance*.php`, commit `3229c4c`). O
 `php-laravel` reproduz o mesmo conteúdo em `database/seeders/` (criado na Fase 2a); este arquivo é a especificação
-do conteúdo, independente do framework. Tudo usa o domínio reservado `example.test` e nomes como `Canal Alpha`.
+do conteúdo, independente do framework. Tudo usa o domínio reservado `example.test` (exceto a miniatura do vídeo, no padrão `i.ytimg.com` com ids inventados, como no v1) e nomes como `Canal Alpha`.
 
 ## Conteúdo (estado inicial, antes de qualquer `.http`)
 
 | Entidade | Quantidade | Regra |
 |---|---|---|
 | Devs | 35 | `dev01` a `dev35`; `name` = `Dev NN`; `avatar` = `https://example.test/avatar/devNN.png`; `bio` = `Bio sintética do dev NN.` (nula nos múltiplos de 3); `created_at` = `2026-01-01 00:00:00` + `NN` minutos |
-| Canais | 3 | `Canal Alpha` (`https://youtube.com/alpha`, Tecnologia), `Canal Beta` (`https://youtube.com/beta`, Educação), `Canal Zeta` (`https://youtube.com/zeta`, Testes; sem vídeos nem reações, reservado para escrita). Criados em `2026-01-01` com 1 s de diferença |
+| Canais | 3 | `Canal Alpha` (`https://youtube.com/alpha`, Tecnologia), `Canal Beta` (`https://youtube.com/beta`, Educação), `Canal Zeta` (`https://youtube.com/zeta`, Testes; sem vídeos nem reações, reservado para escrita). Criados em `2026-01-01` com 1 s de diferença. `description` = `Canal sintético Alpha, usado nos casos de aceite.` (Beta igual; Zeta: `Canal sintético Zeta — sem vídeos nem reações de baseline, dedicado a testes de escrita (Fase 5).`) e `avatar` = `https://example.test/avatar/canal-<alpha\|beta\|zeta>.png` (omitidos até a Fase 3; o G3 achou a diferença) |
 | Tags | 3 | `javascript`, `testes`, `react`; Alpha tem `javascript` e `testes`, Beta tem `react` |
-| Vídeos | 55 | 20 do Alpha (`vidalpha01`..`vidalpha20`) e 35 do Beta (`vidbeta01`..`vidbeta35`); título `Vídeo Alpha NN` / `Vídeo Beta NN`; `url` = `https://www.youtube.com/watch?v=<id>`; `created_at` = `2026-02-01` + 1 minuto por vídeo, Alpha primeiro; `published_at` nulo |
+| Vídeos | 55 | 20 do Alpha (`vidalpha01`..`vidalpha20`) e 35 do Beta (`vidbeta01`..`vidbeta35`); título `Vídeo Alpha NN` / `Vídeo Beta NN`; `url` = `https://www.youtube.com/watch?v=<id>`; `created_at` = `2026-02-01` + 1 minuto por vídeo, Alpha primeiro; `thumbnail` = `https://i.ytimg.com/vi/<id>/hqdefault.jpg` (padrão do YouTube, ids inventados); `published_at` nulo |
 | Reações de dev | 2 | `dev01` curte `dev02` e descurte `dev03` |
 | Reações de canal | 2 | `dev01` segue `Canal Alpha` e ignora `Canal Beta` |
 
