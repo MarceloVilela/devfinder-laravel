@@ -1,0 +1,25 @@
+{
+  "record": [
+    {
+      "title": "Video novo de teste da ingestão — Canal Alpha",
+      "url": "https://www.youtube.com/watch?v=INGESTNEW01&pp=ygUKcmFuZG9tdGFn",
+      "channel_name": "Canal Alpha",
+      "channel_url": "https://youtube.com/alpha",
+      "thumbnail": "https://i.ytimg.com/vi/INGESTNEW01/hq720_custom_2.jpg?sqp=abc&rs=def"
+    },
+    {
+      "title": "Vídeo Alpha 01",
+      "url": "https://www.youtube.com/watch?v=vidalpha01",
+      "channel_name": "Canal Alpha",
+      "channel_url": "https://youtube.com/alpha",
+      "thumbnail": "https://i.ytimg.com/vi/vidalpha01/hqdefault.jpg"
+    },
+    {
+      "title": "Video de canal inexistente da ingestão",
+      "url": "https://www.youtube.com/watch?v=INGESTLOST01",
+      "channel_name": "Canal Inexistente XYZ",
+      "channel_url": "https://www.youtube.com/canal-inexistente",
+      "thumbnail": ""
+    }
+  ]
+}

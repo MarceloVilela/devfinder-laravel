@@ -7,7 +7,7 @@ namespace App\Features\Video\Queries;
 use App\Shared\Support\NormText;
 use Illuminate\Support\Facades\DB;
 
-final class VideoWriter
+class VideoWriter
 {
     /**
      * Canal por nome **ou** link **ou** link alternativo, exatos (paridade com o original: dois critérios de igualdade
@@ -44,5 +44,24 @@ final class VideoWriter
     public function insert(array $data): void
     {
         DB::table('videos')->insert($data + ['created_at' => now(), 'updated_at' => now()]);
+    }
+
+    /**
+     * `youtube_id` dos vídeos ativos que já têm algum destes `url` (exatos). Em blocos de 200. 1 query por bloco.
+     *
+     * @param list<string> $urls
+     * @return array<string, string> url => youtube_id
+     */
+    public function youtubeIdsByUrl(array $urls): array
+    {
+        $found = [];
+
+        foreach (array_chunk(array_values(array_unique($urls)), 200) as $chunk) {
+            foreach (DB::table('videos')->whereNull('deleted_at')->whereIn('url', $chunk)->get(['url', 'youtube_id']) as $row) {
+                is_string($row->url) && is_string($row->youtube_id) && $found[$row->url] = $row->youtube_id;
+            }
+        }
+
+        return $found;
     }
 }

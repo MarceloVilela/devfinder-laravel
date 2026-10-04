@@ -18,4 +18,5 @@ Formato: **Status** (`proposta` → `aceita` → `substituída`), Contexto, Deci
 | [0010](./0010-custo-free-plan.md) | Regra de custo reformulada | **aceita** (2026-10-03) |
 | [0011](./0011-rate-limiting-store.md) | Store do rate limiting | **aceita** (2026-10-03) |
 | [0012](./0012-modelo-de-dados.md) | Modelo de dados relacional | **aceita** (2026-10-03) |
+| [0014](./0014-agendamento-ingestao.md) | Agendamento da ingestão (regra do EventBridge + função de console) | proposta (2026-10-04) |
 | [0013](./0013-oauth-direto-e-jwt.md) | OAuth do GitHub direto e JWT próprio | **aceita** (2026-10-04; evidência parcial, o login real fecha na Fase 4) |

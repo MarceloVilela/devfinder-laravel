@@ -80,3 +80,16 @@ it('o 401 de toda operação autenticada cumpre o contrato', function (string $m
 it('POST /auth/logout: 204 e o cookie de sessão limpo', function (): void {
     $this->matchesContract($this->postJson('/v1/auth/logout'), HttpMethod::POST, '/auth/logout', 204);
 });
+
+it('POST /video/refresh: 200, 401, 403 e 422', function (): void {
+    $body = ['record' => [
+        ['title' => 'Novo', 'url' => 'https://www.youtube.com/watch?v=REFRESHC001', 'channel' => 'Canal Alpha', 'channel_url' => 'x'],
+        ['title' => 'Vídeo Alpha 01', 'url' => 'https://www.youtube.com/watch?v=vidalpha01', 'channel' => 'Canal Alpha', 'channel_url' => 'x'],
+        ['title' => 'Sem canal', 'url' => 'https://www.youtube.com/watch?v=REFRESHC002', 'channel' => 'Nao Existe', 'channel_url' => 'y'],
+    ]];
+
+    $this->matchesContract($this->postJson('/v1/video/refresh', $body), HttpMethod::POST, '/video/refresh', 401);
+    $this->matchesContract($this->postJson('/v1/video/refresh', $body, as_dev('dev06')), HttpMethod::POST, '/video/refresh', 403);
+    $this->matchesContract($this->postJson('/v1/video/refresh', $body, as_admin('dev05')), HttpMethod::POST, '/video/refresh', 200);
+    $this->matchesContract($this->postJson('/v1/video/refresh', ['record' => array_fill(0, 201, [])], as_admin('dev05')), HttpMethod::POST, '/video/refresh', 422);
+});

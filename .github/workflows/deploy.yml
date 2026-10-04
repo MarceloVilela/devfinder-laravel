@@ -51,7 +51,7 @@ jobs:
           APP_WEB_URL: ${{ vars.APP_WEB_URL }}
         run: |
           test -n "$APP_WEB_URL" || { echo "variável APP_WEB_URL vazia"; exit 1; }
-          MISSING="$(aws ssm get-parameters --names /devfinder-laravel/prod/app-key /devfinder-laravel/prod/db-url /devfinder-laravel/prod/jwt-secret /devfinder-laravel/prod/github-client-id /devfinder-laravel/prod/github-client-secret --query 'InvalidParameters' --output text)"
+          MISSING="$(aws ssm get-parameters --names /devfinder-laravel/prod/app-key /devfinder-laravel/prod/db-url /devfinder-laravel/prod/jwt-secret /devfinder-laravel/prod/github-client-id /devfinder-laravel/prod/github-client-secret /devfinder-laravel/prod/jsonbin-api-key /devfinder-laravel/prod/jsonbin-id-subs --query 'InvalidParameters' --output text)"
           test -z "$MISSING" || { echo "parâmetros ausentes no SSM: $MISSING"; exit 1; }
 
       - name: Dependências de produção

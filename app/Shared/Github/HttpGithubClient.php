@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Shared\Github;
 
 use App\Shared\Exceptions\GithubUnavailable;
+use App\Shared\Http\ResilientHttp;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
@@ -33,7 +34,7 @@ final class HttpGithubClient implements GithubClient
     public function publicProfile(string $login): ?GithubProfile
     {
         try {
-            $response = $this->request()->get('https://api.github.com/users/' . rawurlencode($login));
+            $response = ResilientHttp::send(fn() => $this->request()->get('https://api.github.com/users/' . rawurlencode($login)));
         } catch (ConnectionException $e) {
             throw new GithubUnavailable('github unreachable', $e);
         }
@@ -64,11 +65,11 @@ final class HttpGithubClient implements GithubClient
     /** @throws ConnectionException */
     private function exchange(string $code): ?string
     {
-        $response = $this->request()->asJson()->post('https://github.com/login/oauth/access_token', [
+        $response = ResilientHttp::send(fn() => $this->request()->asJson()->post('https://github.com/login/oauth/access_token', [
             'client_id' => $this->clientId,
             'client_secret' => $this->clientSecret,
             'code' => $code,
-        ]);
+        ]));
 
         if ($response->serverError() || ! $response->ok()) {
             throw new GithubUnavailable("github token exchange status {$response->status()}");
@@ -92,7 +93,7 @@ final class HttpGithubClient implements GithubClient
     /** @throws ConnectionException */
     private function profile(string $token): GithubProfile
     {
-        $response = $this->request()->withToken($token)->get('https://api.github.com/user');
+        $response = ResilientHttp::send(fn() => $this->request()->withToken($token)->get('https://api.github.com/user'));
 
         // 401 aqui: o GitHub acabou de emitir o token e já o recusa; trata como indisponibilidade, não como erro do usuário.
         if (! $response->ok()) {
@@ -122,7 +123,6 @@ final class HttpGithubClient implements GithubClient
     private function request(): PendingRequest
     {
         return Http::timeout($this->timeoutSeconds)
-            ->retry(2, 200, fn(\Throwable $e): bool => $e instanceof ConnectionException, throw: false)
             ->withHeaders(['Accept' => 'application/json', 'User-Agent' => 'devfinder-laravel']);
     }
 

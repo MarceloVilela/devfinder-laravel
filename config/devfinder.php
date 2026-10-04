@@ -33,6 +33,17 @@ return [
     /*
     | Autenticação (Fase 4, ADR 0013). Segredos vêm do SSM em produção (`bref-ssm:`), nunca de arquivo versionado.
     */
+    /*
+    | Ingestão agendada (Fase 6). Segredos do JSONBin vêm do SSM em produção; vazios = o comando avisa e não faz nada.
+    */
+    'ingestion' => [
+        'jsonbin' => [
+            'api_key' => env('JSONBIN_API_KEY'),
+            'bin_id' => env('JSONBIN_ID_SUBS'),
+            'timeout_seconds' => 10,
+        ],
+    ],
+
     'auth' => [
         'jwt_secret' => env('JWT_SECRET'),
         'jwt_ttl_seconds' => 604800, // 7 dias, como o contrato (`bearerAuth`)

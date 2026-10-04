@@ -7,6 +7,8 @@ namespace App\Providers;
 use App\Shared\Github\GithubClient;
 use App\Shared\Github\HttpGithubClient;
 use App\Features\Auth\Support\SessionCookie;
+use App\Features\Video\Integrations\HttpJsonBinClient;
+use App\Features\Video\Integrations\JsonBinClient;
 use App\Features\Auth\Support\TokenCodec;
 use App\Shared\Auth\AuthenticatedDev;
 use App\Shared\Support\ConfigKeys;
@@ -26,6 +28,12 @@ final class AppServiceProvider extends ServiceProvider
         $this->app->singleton(TokenCodec::class, fn(): TokenCodec => new TokenCodec(
             self::text(config('devfinder.auth.jwt_secret')),
             self::number(config('devfinder.auth.jwt_ttl_seconds')),
+        ));
+
+        $this->app->bind(JsonBinClient::class, fn(): JsonBinClient => new HttpJsonBinClient(
+            self::text(config('devfinder.ingestion.jsonbin.api_key')),
+            self::text(config('devfinder.ingestion.jsonbin.bin_id')),
+            self::number(config('devfinder.ingestion.jsonbin.timeout_seconds')),
         ));
 
         $this->app->bind(SessionCookie::class, fn(): SessionCookie => SessionCookie::fromConfig());

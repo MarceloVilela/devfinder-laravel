@@ -51,6 +51,22 @@ functions:
         memorySize: 1024
         url: true   # Function URL, auth NONE (ADR 0004); concorrência reservada impossível nesta conta (S6)
 
+    # Ingestão agendada (Fase 6, ADR 0014): roda `php artisan video:refresh` a cada 12 h. Regra do EventBridge (agendada, sem custo),
+    # sem URL pública. Os segredos do JSONBin ficam só aqui: o `web` não os recebe. Os parâmetros do SSM precisam existir antes do deploy.
+    refresh:
+        handler: artisan
+        runtime: php-84-console
+        architecture: x86_64
+        timeout: 300
+        memorySize: 1024
+        environment:
+            JSONBIN_API_KEY: bref-ssm:/devfinder-laravel/${sls:stage}/jsonbin-api-key
+            JSONBIN_ID_SUBS: bref-ssm:/devfinder-laravel/${sls:stage}/jsonbin-id-subs
+        events:
+            -   schedule:
+                    rate: rate(12 hours)
+                    input: '"video:refresh"'
+
 params:
     default:
         corsOrigins: http://localhost:3000   # trocar pela origem real do frontend antes do uso (D-4)

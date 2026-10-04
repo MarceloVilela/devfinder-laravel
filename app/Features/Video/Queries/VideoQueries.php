@@ -87,6 +87,32 @@ final class VideoQueries
         return $this->paginate($this->base()->where('videos.channel_id', $channelId), $requested);
     }
 
+    /**
+     * Vídeos ativos (de canal ativo) por `youtube_id`, em blocos de 200. 1 query por bloco.
+     *
+     * @param list<string> $youtubeIds
+     * @return array<string, VideoView> youtube_id => vídeo
+     */
+    public function byYoutubeIds(array $youtubeIds): array
+    {
+        $views = [];
+
+        foreach (array_chunk(array_values(array_unique($youtubeIds)), 200) as $chunk) {
+            foreach ($this->base()->whereIn('videos.youtube_id', $chunk)->get(array_merge($this->columns(), ['videos.youtube_id as youtube_id'])) as $row) {
+                $views[self::textOf($row, 'youtube_id')] = $this->view($row);
+            }
+        }
+
+        return $views;
+    }
+
+    private static function textOf(stdClass $row, string $column): string
+    {
+        $value = $row->{$column} ?? null;
+
+        return is_string($value) ? $value : '';
+    }
+
     /** 1 query. */
     public function byYoutubeId(string $youtubeId): ?VideoView
     {

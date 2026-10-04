@@ -1,5 +1,5 @@
 {
-  "_comentario": "Política da role de deploy do GitHub Actions (OIDC). Escopo mínimo por nome (prefixo devfinder-laravel-prod). Levantada por leitura do template do osls e VALIDADA por deploy real pelo OIDC (2026-10-03, PR #6: sem ajuste). A Fase 4 acrescentou só a leitura dos parâmetros do SSM, para o deploy falhar cedo se faltar um segredo. <ACCOUNT_ID> e <REGION> são trocados por scripts/aws-bootstrap.sh.",
+  "_comentario": "Política da role de deploy do GitHub Actions (OIDC). Escopo mínimo por nome (prefixo devfinder-laravel-prod). Levantada por leitura do template do osls e VALIDADA por deploy real pelo OIDC (2026-10-03, PR #6: sem ajuste). A Fase 4 acrescentou só a leitura dos parâmetros do SSM, para o deploy falhar cedo se faltar um segredo. A Fase 6 acrescentou as regras agendadas do EventBridge, limitadas ao prefixo do serviço (ADR 0014). <ACCOUNT_ID> e <REGION> são trocados por scripts/aws-bootstrap.sh.",
   "Version": "2012-10-17",
   "Statement": [
     {
@@ -88,6 +88,22 @@
       "Effect": "Allow",
       "Action": "ssm:GetParameters",
       "Resource": "arn:aws:ssm:<REGION>:<ACCOUNT_ID>:parameter/devfinder-laravel/prod/*"
+    },
+    {
+      "Sid": "RegraAgendadaDaIngestao",
+      "Effect": "Allow",
+      "Action": [
+        "events:PutRule",
+        "events:DeleteRule",
+        "events:DescribeRule",
+        "events:PutTargets",
+        "events:RemoveTargets",
+        "events:ListTargetsByRule",
+        "events:TagResource",
+        "events:UntagResource",
+        "events:ListTagsForResource"
+      ],
+      "Resource": "arn:aws:events:<REGION>:<ACCOUNT_ID>:rule/devfinder-laravel-prod-*"
     }
   ]
 }

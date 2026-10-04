@@ -16,6 +16,7 @@ const ALLOWED = new Set([
   'AWS::Lambda::Version',
   'AWS::Lambda::Url',
   'AWS::Lambda::Permission',
+  'AWS::Events::Rule',       // ingestão agendada (Fase 6, ADR 0014): regra agendada, sem custo
 ]);
 const MAX_RETENTION_DAYS = 14;
 const SECRET_PATTERNS = [
@@ -37,13 +38,19 @@ function check(dir) {
         const days = r.Properties && r.Properties.RetentionInDays;
         if (!(Number.isInteger(days) && days <= MAX_RETENTION_DAYS)) problems.push(`${f}: log group ${id} sem retenção de até ${MAX_RETENTION_DAYS} dias`);
       }
+      if (r.Type === 'AWS::Events::Rule') {
+        // só regra por agenda (rate/cron): nada de padrão de evento da conta, que dispararia por tráfego
+        const props = r.Properties || {};
+        if (!props.ScheduleExpression) problems.push(`${f}: regra ${id} sem ScheduleExpression (só regra agendada)`);
+        if (props.EventPattern) problems.push(`${f}: regra ${id} com EventPattern (só regra agendada)`);
+      }
       if (r.Type === 'AWS::Lambda::Function') {
         const vars = (r.Properties.Environment && r.Properties.Environment.Variables) || {};
         if (vars.APP_DEBUG !== 'false') problems.push(`${f}: APP_DEBUG deve ser 'false' (veio ${JSON.stringify(vars.APP_DEBUG)})`);
         if (vars.APP_ENV !== 'production') problems.push(`${f}: APP_ENV deve ser 'production' (veio ${JSON.stringify(vars.APP_ENV)})`);
         if (/^\*$/.test(String(vars.CORS_ALLOWED_ORIGINS || '').trim()) || String(vars.CORS_ALLOWED_ORIGINS || '').split(',').some((o) => o.trim() === '*')) problems.push(`${f}: CORS_ALLOWED_ORIGINS com curinga (D-4)`);
         // Segredos só por referência ao SSM (resolvida pelo runtime do Bref), nunca em texto na configuração da função.
-        for (const k of ['APP_KEY', 'DB_URL', 'JWT_SECRET', 'GITHUB_CLIENT_SECRET']) {
+        for (const k of ['APP_KEY', 'DB_URL', 'JWT_SECRET', 'GITHUB_CLIENT_SECRET', 'JSONBIN_API_KEY']) {
           if (vars[k] !== undefined && !String(vars[k]).startsWith('bref-ssm:')) problems.push(`${f}: ${k} deve ser bref-ssm:, não texto`);
         }
         for (const [k, v] of Object.entries(vars)) {

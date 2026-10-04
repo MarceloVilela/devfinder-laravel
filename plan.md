@@ -35,7 +35,7 @@
 | 3 | Endpoints públicos de leitura | M | **concluída** (PR #6 mergeado em 2026-10-03; aceite no deploy real em 2026-10-03, `specs/execucao-fase-3.log` seção 7): 10 rotas, 179 testes, G3 nulo local e no deploy real (30 capturas), orçamento de queries testado |
 | 4 | Autenticação (GitHub OAuth + JWT) | M | **implementada local, aguardando o login real e o PR** (branch `fase-4-autenticacao`, `specs/fase-4-autenticacao.md`): `/auth/github`, callback com `state`, `/me`, middlewares, personalização, rate limiting; 259 testes, G3 nulo (40 capturas). SSM, variável `APP_WEB_URL` e política da role feitos; ADR 0013 aceita. Falta: callback do OAuth App na Function URL, login real |
 | 5 | Endpoints autenticados de escrita e relacionamento | M | **implementada local, D-14 adiada, aguardando o aceite no deploy real e o PR** (branch `fase-5-escrita`, `specs/fase-5-escrita.md`): 14 operações, RBAC mínimo (`ADMIN` em canal e vídeo, D-15), 412 testes, G3 de escrita nulo (38 capturas), orçamentos e rate limit de escrita testados |
-| 6 | Ingestão em lote (agendada) | M | pendente |
+| 6 | Ingestão em lote (agendada) | M | **implementada local, SSM e IAM prontos; aguardando PR, deploy e aceite agendado** (branch `fase-6-ingestao`, `specs/fase-6-ingestao.md`): `POST /video/refresh`, comando `video:refresh`, função `refresh` com regra do EventBridge, `ResilientHttp`; 474 testes, G3 nulo (9 capturas) |
 | 7 | Observabilidade, desempenho, segurança e verificação contra o deploy real | L | pendente |
 | 8 | Fechamento do `php-laravel` (checklist de long tail, README honesto, plano de fim de vida) | S | pendente |
 
