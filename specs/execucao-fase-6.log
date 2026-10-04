@@ -1,0 +1,73 @@
+# Execução da Fase 6 — ingestão em lote agendada (2026-10-04)
+# Ambiente local: docker compose (app :8082, PostgreSQL 18), dataset sintético de paridade; v1 local (:8081) recriado com o mesmo dataset. Deploy e agendamento reais: PENDENTES.
+
+## 1. Gates (container limpo, .env do workflow: scripts/reproduz-ci.sh)
+==== gera .env do CI (só as chaves que o workflow define)
+==== composer validate --strict
+==== composer install
+==== composer audit
+No security vulnerability advisories found.
+==== chave da aplicação
+==== pint --test
+    PASS   ......................................................... 193 files  
+==== larastan nível 9 (sem baseline)
+ [OK] No errors                                                                 
+==== config:check
+==== migrate e rollback e migrate (reversível)
+==== paridade de rotas: nada registrado fora do contrato
+==== pest (Feature, Contract, Arch)
+  Tests:    474 passed (2219 assertions)
+==================================================
+EXIT=0
+
+## 2. Pacote e allowlist (scripts/reproduz-package.sh): duas funções e a regra agendada
+-rw-rw-r-- 1 marcelo marcelo 16925994 Oct  4 19:25 .serverless/devfinder-laravel.zip
+allowlist OK (9 tipos permitidos)
+   AWS::Logs::LogGroup WebLogGroup
+   AWS::Logs::LogGroup RefreshLogGroup
+   AWS::Lambda::Function WebLambdaFunction
+   AWS::Lambda::Function RefreshLambdaFunction
+   AWS::Lambda::Url WebLambdaFunctionUrl
+   AWS::Events::Rule RefreshEventsRuleSchedule1
+EXIT=0
+ℹ tests 28
+ℹ pass 28
+ℹ fail 0
+
+## 3. Comando video:refresh no container (dataset sintético; fixture congelada tests/Fixtures/jsonbin-videos.json)
+$ ./run.sh php artisan video:refresh --fixture=tests/Fixtures/jsonbin-videos.json   # depois do G3 (o vídeo novo já existia)
+JSONBin: 3 candidato(s) encontrado(s).
+Adicionados: 0 | Já existiam: 2 | Erros: 1
+  - channel(Canal Inexistente XYZ) not found, for: Video de canal inexistente da ingestão
+exit=0
+$ ./run.sh php artisan video:refresh   # sem credenciais e sem fixture
+JSONBIN_API_KEY e JSONBIN_ID_SUBS não configurados e sem --fixture: nada a fazer.
+
+## 4. G3 da ingestão — v1 local x php-laravel local (9 capturas, mesmos candidatos por POST /video/refresh, bancos recriados antes)
+# O video:refresh do v1 só lê o JSONBin real; a rota usa o mesmo VideoIngestor. dev01 promovido a ADMIN só no php-laravel (o v1 não tem papéis).
+$ G3_TOKEN=<v1> node specs/tools/capture-g3-ingest.cjs http://localhost:8081/v1 v1i.json && G3_TOKEN=<laravel> ... http://localhost:8082/v1 li.json
+IGUAIS após a normalização
+exit=0
+status e content-type iguais nas 9 capturas
+  200 GET /feed/trending?page=1                    
+  200 GET /channels                                
+  200 GET /devs?page=1                             
+  200 POST /video/refresh #3                       added=1 found=1 errors=1
+  200 POST /video/refresh #4                       added=0 found=2 errors=1
+  200 POST /video/refresh #5                       added=0 found=0 errors=0
+  200 POST /video/refresh #6                       added=0 found=0 errors=0
+  200 GET /feed/trending?page=1                    
+  200 GET /video/INGESTNEW01                       
+
+## 5. Casos de aceite no ambiente local (ingestion.http, httpyac, token de dev01 ADMIN)
+=> 401 (19 ms) => 200 (33 ms) => 200 (71 ms) => 200 (83 ms) 5 requests processed (5 succeeded) 
+
+## 6. Feito na conta (autorizado pelo usuário em 2026-10-04)
+# - SSM: /devfinder-laravel/prod/jsonbin-api-key e jsonbin-id-subs criados (SecureString, versão 1, --no-overwrite), copiados do .env do php-codei por arquivo
+#   temporário (60 e 24 bytes), sem imprimir os valores; o diretório temporário foi apagado. Agora há 7 parâmetros em /devfinder-laravel/prod/.
+# - IAM: política da role de deploy atualizada (put-role-policy) com o statement RegraAgendadaDaIngestao: events:PutRule, DeleteRule, DescribeRule, PutTargets,
+#   RemoveTargets, ListTargetsByRule, TagResource, UntagResource, ListTagsForResource em rule/devfinder-laravel-prod-*; conferido com get-role-policy.
+# - Guard do deploy.yml (exige os 7 parâmetros): a mesma consulta devolve InvalidParameters vazio, então não barra o deploy.
+#
+## 7. Pendente para fechar a fase
+# - Merge (o deploy.yml cria a função refresh e a regra) e a prova da execução agendada no CloudWatch (/aws/lambda/devfinder-laravel-prod-refresh).

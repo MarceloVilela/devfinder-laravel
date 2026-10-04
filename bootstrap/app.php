@@ -7,6 +7,7 @@ use App\Features\Docs\Http\Controllers\ShowOpenApiController;
 use App\Features\Health\Http\Controllers\ShowHealthController;
 use App\Features\Health\Http\Controllers\ShowHealthDbController;
 use App\Features\Auth\Console\MintToken;
+use App\Features\Video\Console\RefreshVideos;
 use App\Features\Auth\Http\Middleware\OptionalAuth;
 use App\Features\Auth\Http\Middleware\RequireAdmin;
 use App\Features\Auth\Http\Middleware\RequireAuth;
@@ -33,7 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::get('/docs/openapi.yaml', ShowOpenApiController::class)->name('docs.openapi');
         },
     )
-    ->withCommands([ConfigCheck::class, MintToken::class])
+    ->withCommands([ConfigCheck::class, MintToken::class, RefreshVideos::class])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(AssignRequestId::class);
         $middleware->api(append: [RejectMalformedInput::class]);

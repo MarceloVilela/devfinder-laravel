@@ -21,6 +21,7 @@ use App\Features\Dev\Http\Controllers\ShowMeController;
 use App\Features\Dev\Http\Controllers\StoreDevController;
 use App\Features\Info\Http\Controllers\ShowAppInfoController;
 use App\Features\Search\Http\Controllers\SearchCatalogController;
+use App\Features\Video\Http\Controllers\IngestVideosController;
 use App\Features\Video\Http\Controllers\ListChannelFeedController;
 use App\Features\Video\Http\Controllers\ListSubscriptionsController;
 use App\Features\Video\Http\Controllers\ListTrendingController;
@@ -47,6 +48,7 @@ Route::middleware('auth')->group(function (): void {
     Route::middleware(['admin', 'throttle:writes'])->group(function (): void {
         Route::post('/channels', StoreChannelController::class);
         Route::post('/video', StoreVideoController::class);
+        Route::post('/video/refresh', IngestVideosController::class);
     });
 
     // O tipo da reação vem do `defaults`: um controller de adicionar e um de remover por entidade (F5-3).

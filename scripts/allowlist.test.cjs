@@ -40,3 +40,7 @@ test('GITHUB_CLIENT_SECRET em texto é reprovado (Fase 4)', () => assert.match(r
 test('segredos da Fase 4 por bref-ssm: passam', () => assert.deepEqual(run((t) => {
   Object.assign(t.Resources.Fn.Properties.Environment.Variables, { JWT_SECRET: 'bref-ssm:/x/jwt-secret', GITHUB_CLIENT_SECRET: 'bref-ssm:/x/github-client-secret' });
 }), []));
+test('regra agendada do EventBridge passa (ingestão da Fase 6)', () => assert.deepEqual(run((t) => { t.Resources.Rule = { Type: 'AWS::Events::Rule', Properties: { ScheduleExpression: 'rate(12 hours)' } }; }), []));
+test('regra do EventBridge sem agenda é reprovada', () => assert.match(run((t) => { t.Resources.Rule = { Type: 'AWS::Events::Rule', Properties: {} }; })[0], /sem ScheduleExpression/));
+test('regra do EventBridge com padrão de evento é reprovada', () => assert.match(run((t) => { t.Resources.Rule = { Type: 'AWS::Events::Rule', Properties: { ScheduleExpression: 'rate(1 minute)', EventPattern: { source: ['aws.s3'] } } }; })[0], /EventPattern/));
+test('JSONBIN_API_KEY em texto é reprovada (Fase 6)', () => assert.match(run((t) => { t.Resources.Fn.Properties.Environment.Variables.JSONBIN_API_KEY = '$2b$10$abcdefghijklmnopqrstuv'; })[0], /JSONBIN_API_KEY/));

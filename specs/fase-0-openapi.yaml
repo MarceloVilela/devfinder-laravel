@@ -391,21 +391,27 @@ paths:
       x-auth: required
       security: [{ bearerAuth: [] }, { cookieAuth: [] }]
       requestBody:
-        required: true
+        required: false
         content:
           application/json:
             schema:
               type: object
-              required: [record]
               properties:
                 record:
                   type: array
+                  maxItems: 200
+                  nullable: true
+                  description: Candidatos no formato `AddVideo` (o bin do JSONBin usa `channel_name`; o comando agendado troca por `channel`). Ausente, nulo ou vazio dá 200 com listas vazias.
                   items:
                     $ref: "#/components/schemas/AddVideo"
       responses:
         "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
         "200":
-          description: Resultado da ingestão em lote
+          description: >
+            Resultado da ingestão em lote (F6): vídeo novo em `videosAdded`; `url` que já existia, ou id já gravado, em `videosFounded`; canal que não
+            resolve (por nome, link ou link alternativo) e candidato inválido em `errors`. Reexecutar o mesmo lote é idempotente. Exige `ADMIN` (RBAC).
           content:
             application/json:
               schema:
@@ -926,9 +932,17 @@ components:
           type: array
           items:
             type: object
+            required: [errorMessage]
             description: >
-              Forma varia por caso — canal não encontrado (`errorMessage`, `title`,
-              `url`, `channel`, `channel_url`, `thumbnail`) ou exceção crua capturada.
+              Canal não encontrado ou candidato inválido: `errorMessage` mais os campos enviados
+              (`title`, `url`, `channel`, `channel_url`, `thumbnail`). Nunca carrega exceção crua.
+            properties:
+              errorMessage: { type: string }
+              title: { type: string }
+              url: { type: string }
+              channel: { type: string }
+              channel_url: { type: string }
+              thumbnail: { type: string }
 
     SearchResult:
       type: object
