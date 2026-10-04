@@ -1,5 +1,5 @@
 {
-  "_comentario": "Confiança da role de deploy: só este repositório e só a branch main (OIDC). <ACCOUNT_ID> é trocado por scripts/aws-bootstrap.sh.",
+  "_comentario": "Confiança da role de deploy: só este repositório e só a branch main (OIDC). <ACCOUNT_ID> é trocado por scripts/aws-bootstrap.sh. O sub usa o formato IMUTÁVEL (dono@id/repo@id), que este repositório emite (gh api repos/MarceloVilela/devfinder-laravel/actions/oidc/customization/sub: use_immutable_subject=true); o formato antigo repo:dono/repo:ref:... é recusado (achado em 2026-10-03).",
   "Version": "2012-10-17",
   "Statement": [
     {
@@ -9,7 +9,7 @@
       "Condition": {
         "StringEquals": {
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-          "token.actions.githubusercontent.com:sub": "repo:MarceloVilela/devfinder-laravel:ref:refs/heads/main"
+          "token.actions.githubusercontent.com:sub": "repo:MarceloVilela@32023347/devfinder-laravel@1402300600:ref:refs/heads/main"
         }
       }
     }

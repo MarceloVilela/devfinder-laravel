@@ -69,3 +69,18 @@ feed/trending          p50=31 p95=58
 channels               p50=30 p95=50
 search?q=Alpha         p50=28 p95=49
 video/vidalpha01       p50=30 p95=52
+
+## 7. Aceite no deploy real (2026-10-03, Function URL us-east-2; deploy feito pelo deploy.yml via OIDC, run 37153911494)
+# O OIDC falhou na 1ª tentativa (sts:AssumeRoleWithWebIdentity): o repositório emite `sub` imutável
+# (repo:MarceloVilela@32023347/devfinder-laravel@1402300600:ref:refs/heads/main). Confiança da role corrigida; rerun verde
+# (migrate, osls deploy, smoke OK). A política de permissões da role não precisou de ajuste.
+# Seed do Neon (autorizado): tabelas conferidas vazias (0/0/0/0/0/0), `db:seed --class=ParityDatasetSeeder --force` pela URL direta
+# (12,2 s), depois 35 devs, 3 canais, 3 tags, 55 vídeos, 2 + 2 reações. URL de conexão nunca impressa; arquivo temporário apagado.
+#
+# G3 contra o deploy real (30 capturas, v1 local x Lambda): "IGUAIS após a normalização"; status e content-type iguais nas 30.
+# search.http contra o deploy real (7 requisições): 200, 200, 422, 200, 200, 422, 200.
+# Entrada hostil no deploy real: q=(a+)+$, %, _, ' or 1=1 -- => [] 200; q=a%00b e q=%ff%fe => 400 {"error":"Malformed input."}.
+# Não encontrado: /devs/nobody => null 200; feed/channel de canal inexistente => lista vazia 200; /channels/<link com %2F> acha o canal.
+# page=999 em /devs serve a última página. Cabeçalhos: x-request-id presente; CORS só com a origem configurada (http://localhost:3000, provisória).
+# Latência (cliente em sequência, nova conexão TLS por requisição, rede inclusa; NÃO é o G1): p50 645 a 671 ms, p95 736 a 888 ms.
+# O orçamento de queries só se prova nos testes (seção 1): o deploy não expõe contagem de queries.

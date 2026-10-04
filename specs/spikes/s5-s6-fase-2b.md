@@ -40,6 +40,6 @@ Achados desta etapa:
 6. Latência (G1): `g1-latencia-deploy-real.md`.
 
 **Falta**
-1. **OIDC de ponta a ponta**: só funciona a partir da `main` (a confiança da role é restrita a ela); precisa das variáveis `AWS_DEPLOY_ROLE_ARN`, `CORS_ALLOWED_ORIGINS` e do secret `DIRECT_DATABASE_URL` no GitHub, que **não foram criados**. Até lá o job `deploy` do `deploy.yml` é pulado (`if: vars.AWS_DEPLOY_ROLE_ARN != ''`).
-2. **A política da role de deploy não foi validada**: o deploy desta etapa usou administrador. A política cobre o que o `osls` chama pelo que se leu do template e do CloudTrail (que atrasa); o 1º deploy pelo OIDC pode pedir ajustes (S3, IAM).
+1. **(Resolvido em 2026-10-03: OIDC validado no deploy do PR #6; o `sub` imutável exigiu corrigir a confiança da role, a política de permissões não precisou de ajuste.)** **OIDC de ponta a ponta**: só funciona a partir da `main` (a confiança da role é restrita a ela); precisa das variáveis `AWS_DEPLOY_ROLE_ARN`, `CORS_ALLOWED_ORIGINS` e do secret `DIRECT_DATABASE_URL` no GitHub, que **não foram criados**. Até lá o job `deploy` do `deploy.yml` é pulado (`if: vars.AWS_DEPLOY_ROLE_ARN != ''`).
+2. **(Resolvido: o deploy pelo OIDC passou com a política como está.)** **A política da role de deploy não foi validada**: o deploy desta etapa usou administrador. A política cobre o que o `osls` chama pelo que se leu do template e do CloudTrail (que atrasa); o 1º deploy pelo OIDC pode pedir ajustes (S3, IAM).
 3. Rotação da senha do `neondb_owner` (**não feita**: não estava entre as ações autorizadas; se feita, atualizar `/devfinder-laravel/prod/db-url` no SSM).
