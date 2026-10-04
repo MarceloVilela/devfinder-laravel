@@ -15,9 +15,10 @@
 #    (`/devfinder-laravel/prod/{jwt-secret,github-client-id,github-client-secret}`) e `APP_WEB_URL` na variável do GitHub.
 # 3. Abrir {{baseUrl}}/auth/github no NAVEGADOR (o cookie `devfinder_oauth_state` precisa ir junto até o callback; por isso
 #    não dá para seguir o redirect no REST Client). Autorizar o App no GitHub.
-# 4. O GitHub volta ao callback; ele confere o `state` contra o cookie, troca o `code`, cria ou reaproveita o Dev e
-#    redireciona para `${APP_WEB_URL}/login?token=<jwt>`. Copiar o `token` da URL final.
-# 5. Usar esse token em `GET /me` (abaixo) como `{{authToken}}`.
+# 4. O GitHub volta ao callback; ele confere o `state` contra o cookie, troca o `code`, cria ou reaproveita o Dev, abre a sessão com
+#    `Set-Cookie: devfinder_token=<jwt>` (httpOnly, SameSite=Lax) e redireciona para `${APP_WEB_URL}/login`, sem token na URL (F4-13).
+# 5. O front chama `GET /me` e o cookie vai junto; no REST Client use o token sintético como `{{authToken}}` (Bearer) ou envie
+#    `Cookie: devfinder_token=<jwt>`.
 # Falhas do usuário (sem `code`, `state` ausente ou diferente, `code` recusado, "Cancel" no GitHub) voltam a
 # `${APP_WEB_URL}/login` sem token. GitHub fora do ar: 502 {"error":"GitHub unavailable."}.
 
@@ -60,3 +61,12 @@ Authorization: Bearer {{ghostAuthToken}}
 ### GET /me — token na query string (nunca aceito)
 # Esperado: 401, {"error":"Token not provided."}: só o cabeçalho Authorization vale.
 GET {{baseUrl}}/me?token={{authToken}}
+
+### GET /me — sessão por cookie (F4-13)
+# Esperado: 200, o Dev do cookie. É assim que o `devfinder-next` pede (via proxy `/backend`, com o cookie do navegador).
+GET {{baseUrl}}/me
+Cookie: devfinder_token={{authToken}}
+
+### POST /auth/logout — limpa o cookie de sessão
+# Esperado: 204 e `Set-Cookie: devfinder_token=deleted; Max-Age=0; path=/; httponly; samesite=lax`.
+POST {{baseUrl}}/auth/logout

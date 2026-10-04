@@ -76,14 +76,34 @@ it('gera um state diferente a cada login', function (): void {
     expect(startLogin($this)[1])->not->toBe(startLogin($this)[1]);
 });
 
-it('conclui o login: cria o Dev em minúsculas e redireciona ao front com um token válido', function (): void {
+/** Valor do cookie de sessão emitido na resposta, ou null. */
+/** @param TestResponse<Symfony\Component\HttpFoundation\Response> $response */
+function sessionCookieOf(TestResponse $response): ?Symfony\Component\HttpFoundation\Cookie
+{
+    foreach ($response->headers->getCookies() as $cookie) {
+        if ($cookie->getName() === 'devfinder_token' && $cookie->getValue() !== '') {
+            return $cookie;
+        }
+    }
+
+    return null;
+}
+
+it('conclui o login: cria o Dev em minúsculas e abre a sessão por cookie httpOnly, sem token na URL (F4-13)', function (): void {
     fakeGithub();
     [, $state, $cookie] = startLogin($this);
 
-    $response = callback($this, "code=abc&state={$state}", $cookie)->assertRedirectContains('https://app.example.test/login?token=');
+    $response = callback($this, "code=abc&state={$state}", $cookie)->assertRedirect('https://app.example.test/login');
 
-    parse_str((string) parse_url((string) $response->headers->get('Location'), PHP_URL_QUERY), $query);
-    expect(app(TokenCodec::class)->username(is_string($query['token']) ? $query['token'] : ''))->toBe('octo-cat');
+    $session = sessionCookieOf($response);
+    expect($session)->not->toBeNull();
+    assert($session !== null);
+    expect(app(TokenCodec::class)->username((string) $session->getValue()))->toBe('octo-cat')
+        ->and($session->isHttpOnly())->toBeTrue()
+        ->and($session->getSameSite())->toBe('lax')
+        ->and($session->getPath())->toBe('/')
+        ->and($session->getExpiresTime())->toBeGreaterThan(time() + 604000)->toBeLessThanOrEqual(time() + 604800)
+        ->and((string) $response->headers->get('Location'))->not->toContain('token');
     expect($response->headers->get('Referrer-Policy'))->toBe('no-referrer');
     expect($response->headers->get('Cache-Control'))->toContain('no-store');
 
@@ -94,20 +114,40 @@ it('conclui o login: cria o Dev em minúsculas e redireciona ao front com um tok
         ->and($dev->avatar)->toBe('https://avatars.example.test/octo.png');
 });
 
+it('a sessão aberta no callback vale no /me, só com o cookie', function (): void {
+    fakeGithub();
+    [, $state, $cookie] = startLogin($this);
+    $session = sessionCookieOf(callback($this, "code=abc&state={$state}", $cookie));
+    assert($session !== null);
+
+    $this->withUnencryptedCookie('devfinder_token', $session->getValue())->withCredentials()->getJson('/v1/me')->assertOk()->assertJsonPath('user', 'octo-cat');
+});
+
+it('Secure só em produção', function (): void {
+    config(['devfinder.auth.session_cookie.secure' => true]);
+    fakeGithub();
+    [, $state, $cookie] = startLogin($this);
+
+    $session = sessionCookieOf(callback($this, "code=abc&state={$state}", $cookie));
+
+    expect($session?->isSecure())->toBeTrue();
+});
+
 it('apaga o cookie do state no callback', function (): void {
     fakeGithub();
     [, $state, $cookie] = startLogin($this);
 
     $response = callback($this, "code=abc&state={$state}", $cookie);
 
-    expect((string) $response->headers->get('Set-Cookie'))->toContain(STATE_COOKIE . '=deleted');
+    $cleared = array_filter($response->headers->getCookies(), static fn($c): bool => $c->getName() === STATE_COOKIE && $c->getValue() === '');
+    expect($cleared)->toHaveCount(1);
 });
 
 it('reaproveita o Dev existente, sem duplicar, mesmo com outra caixa no login', function (): void {
     fakeGithub();
     foreach ([1, 2] as $_) {
         [, $state, $cookie] = startLogin($this);
-        callback($this, "code=abc&state={$state}", $cookie)->assertRedirectContains('/login?token=');
+        expect(sessionCookieOf(callback($this, "code=abc&state={$state}", $cookie)))->not->toBeNull();
     }
 
     expect(DB::table('devs')->whereRaw("norm_text(username) = 'octo-cat'")->count())->toBe(1);
@@ -129,6 +169,7 @@ it('manda ao login do front, sem token, quando falta o code, o state ou o cookie
     };
 
     $response->assertRedirect('https://app.example.test/login');
+    expect(sessionCookieOf($response))->toBeNull();
     Http::assertNothingSent();
     expect(DB::table('devs')->count())->toBe(0);
 })->with(['sem code', 'code vazio', 'sem state', 'sem cookie', 'state diferente', 'cookie diferente', 'usuário negou']);

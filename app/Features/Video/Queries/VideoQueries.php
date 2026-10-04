@@ -35,6 +35,22 @@ final class VideoQueries
         return $this->paginate($query, $requested);
     }
 
+    /**
+     * Vídeos dos canais com `follow` do dev, na ordem do trending (F5-11). 2 queries (+1 do middleware).
+     *
+     * @return Paginated<VideoView>
+     */
+    public function subscribed(string $devId, int $requested): Paginated
+    {
+        return $this->paginate(
+            $this->base()->whereIn(
+                'videos.channel_id',
+                DB::table('channel_reactions')->select('channel_id')->where('dev_id', $devId)->where('type', 'follow'),
+            ),
+            $requested,
+        );
+    }
+
     /** `?user=` identifica o dev sem token (paridade com o v1 e o original); desconhecido segue anônimo. 1 query. */
     private function devIdByUsername(?string $username): ?string
     {

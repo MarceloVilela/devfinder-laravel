@@ -23,3 +23,7 @@ parameters:
             identifier: argument.type
             message: '#Parameter \#1 \$test of function (startLogin|callback) expects Tests\\TestCase, Pest\\PendingCalls\\TestCall given\.#'
             path: tests
+        # O trait é usado por `uses(...)` no Pest, que o PHPStan não enxerga.
+        -
+            identifier: trait.unused
+            path: tests/Support

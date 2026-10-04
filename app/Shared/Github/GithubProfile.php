@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Features\Auth\Data;
+namespace App\Shared\Github;
 
 final readonly class GithubProfile
 {

@@ -81,7 +81,7 @@ paths:
       tags: [Dev]
       summary: Create dev
       x-auth: required
-      security: [{ bearerAuth: [] }]
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }]
       requestBody:
         required: true
         content:
@@ -95,12 +95,26 @@ paths:
                   description: GitHub username
                   example: dev01
       responses:
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "201":
-          description: Dev adicionado.
+          description: Dev adicionado (sempre 201, mesmo se já existia).
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Dev"
+        "404":
+          description: Username que não existe no GitHub (D-6; o v1 devolvia 500).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "502":
+          description: GitHub indisponível (D-6).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
   /devs/{username}:
     get:
@@ -138,7 +152,7 @@ paths:
       tags: [Channel]
       summary: Create channel
       x-auth: required
-      security: [{ bearerAuth: [] }]
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }]
       requestBody:
         required: true
         content:
@@ -146,12 +160,27 @@ paths:
             schema:
               $ref: "#/components/schemas/AddChannel"
       responses:
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "200":
+          description: Canal que já existia, atualizado (achado por "contém" no nome ou no link, F5-1).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Channel"
         "201":
           description: Created
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Channel"
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: O novo nome ou link colide com outro canal.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422": { $ref: "#/components/responses/ValidationFailed" }
 
   /channels/{searchQuery}:
     get:
@@ -185,8 +214,9 @@ paths:
         "Escopo". Documentado aqui por completude do contrato original; não implementado
         nesta stack.
       x-auth: required
-      security: [{ bearerAuth: [] }]
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }]
       responses:
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "200":
           description: Array with the names of the channels that were added
           content:
@@ -275,12 +305,13 @@ paths:
       tags: [Video]
       summary: Get videos related to the channels you are subscribed to
       x-auth: required
-      security: [{ bearerAuth: [] }]
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }]
       parameters:
         - name: page
           in: query
           schema: { type: string }
       responses:
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "200":
           description: OK
           content:
@@ -316,7 +347,7 @@ paths:
       tags: [Video]
       summary: Create video
       x-auth: required
-      security: [{ bearerAuth: [] }]
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }]
       requestBody:
         required: true
         content:
@@ -324,12 +355,27 @@ paths:
             schema:
               $ref: "#/components/schemas/AddVideo"
       responses:
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "201":
           description: Created
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Video"
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "400":
+          description: Canal do vídeo não encontrado (por nome, link ou link alternativo).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoError"
+        "409":
+          description: Vídeo já existe; traz o vídeo existente por inteiro.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoExists"
+        "422": { $ref: "#/components/responses/ValidationFailed" }
 
   /video/refresh:
     post:
@@ -343,7 +389,7 @@ paths:
         do comando Artisan agendado via EventBridge Scheduler (mesma paridade de contrato
         adotada em `../../serverless/specs/fase-6-ingestao-lote.md`).
       x-auth: required
-      security: [{ bearerAuth: [] }]
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }]
       requestBody:
         required: true
         content:
@@ -357,6 +403,7 @@ paths:
                   items:
                     $ref: "#/components/schemas/AddVideo"
       responses:
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "200":
           description: Resultado da ingestão em lote
           content:
@@ -396,7 +443,7 @@ paths:
       tags: [Dev]
       summary: Returns authenticated user information
       x-auth: required
-      security: [{ bearerAuth: [] }]
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }]
       responses:
         "200":
           description: A JSON object containing data from the authenticated user
@@ -420,96 +467,105 @@ paths:
       tags: [Dev.likes|dislikes]
       summary: Add like to dev
       x-auth: required
-      security: [{ bearerAuth: [] }]
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/UsernamePath"
       responses:
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "200": { $ref: "#/components/responses/DevAuthenticated" }
-        "400": { description: Bad Request }
+        "400": { $ref: "#/components/responses/ReactionTargetNotFound" }
     delete:
       tags: [Dev.likes|dislikes]
       summary: Remove like for dev
       x-auth: required
-      security: [{ bearerAuth: [] }]
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/UsernamePath"
       responses:
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "200": { $ref: "#/components/responses/DevAuthenticated" }
-        "400": { description: Bad Request }
+        "400": { $ref: "#/components/responses/ReactionTargetNotFound" }
 
   /dislikes/devs/{username}:
     post:
       tags: [Dev.likes|dislikes]
       summary: Add dislike to dev
       x-auth: required
-      security: [{ bearerAuth: [] }]
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/UsernamePath"
       responses:
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "200": { $ref: "#/components/responses/DevAuthenticated" }
-        "400": { description: Bad Request }
+        "400": { $ref: "#/components/responses/ReactionTargetNotFound" }
     delete:
       tags: [Dev.likes|dislikes]
       summary: Remove dislike for dev
       x-auth: required
-      security: [{ bearerAuth: [] }]
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/UsernamePath"
       responses:
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "200": { $ref: "#/components/responses/DevAuthenticated" }
-        "400": { description: Bad Request }
+        "400": { $ref: "#/components/responses/ReactionTargetNotFound" }
 
   /likes/channels/{username}:
     post:
       tags: [Dev.likes|dislikes]
       summary: Add like (follow) to channel
       x-auth: required
-      security: [{ bearerAuth: [] }]
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/UsernamePath"
       responses:
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "200": { $ref: "#/components/responses/DevAuthenticated" }
-        "400": { description: Bad Request }
+        "400": { $ref: "#/components/responses/ReactionTargetNotFound" }
     delete:
       tags: [Dev.likes|dislikes]
       summary: Remove like (unfollow) for channel
       x-auth: required
-      security: [{ bearerAuth: [] }]
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/UsernamePath"
       responses:
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "200": { $ref: "#/components/responses/DevAuthenticated" }
-        "400": { description: Bad Request }
+        "400": { $ref: "#/components/responses/ReactionTargetNotFound" }
 
   /dislikes/channels/{username}:
     post:
       tags: [Dev.likes|dislikes]
       summary: Add dislike (ignore) to channel
       x-auth: required
-      security: [{ bearerAuth: [] }]
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/UsernamePath"
       responses:
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "200": { $ref: "#/components/responses/DevAuthenticated" }
-        "400": { description: Bad Request }
+        "400": { $ref: "#/components/responses/ReactionTargetNotFound" }
     delete:
       tags: [Dev.likes|dislikes]
       summary: Remove dislike (un-ignore) for channel
       x-auth: required
-      security: [{ bearerAuth: [] }]
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/UsernamePath"
       responses:
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "200": { $ref: "#/components/responses/DevAuthenticated" }
-        "400": { description: Bad Request }
+        "400": { $ref: "#/components/responses/ReactionTargetNotFound" }
 
   /likes/devs:
     get:
       tags: [Dev.likes|dislikes]
       summary: Get devs marked with like (by the authenticated user)
       x-auth: required
-      security: [{ bearerAuth: [] }]
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }]
       responses:
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "200":
           description: >
             A JSON object containing array of devs marked with like by authenticated
@@ -524,8 +580,9 @@ paths:
       tags: [Dev.likes|dislikes]
       summary: Get devs marked with dislike (by the authenticated user)
       x-auth: required
-      security: [{ bearerAuth: [] }]
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }]
       responses:
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "200":
           description: >
             A JSON object containing array of devs marked with dislike by
@@ -558,6 +615,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Clears the session cookie
+      description: >
+        Fonte: código (`devfinder-api/src/routes/socialLoginGithub.ts`), `#swagger.ignore` no original. Limpa o cookie `devfinder_token`
+        (só o backend consegue: é `httpOnly`). 204 com ou sem sessão: sair é idempotente.
+      x-auth: public
+      responses:
+        "204":
+          description: Cookie de sessão limpo (`Set-Cookie` expirado, mesmos atributos do emitido)
+
   /auth/github/callback:
     get:
       tags: [Auth]
@@ -578,8 +647,9 @@ paths:
       responses:
         "302":
           description: >
-            Redirect to `${APP_WEB_URL}/login?token=<jwt>`; sem token (`${APP_WEB_URL}/login`) se faltar `code`, o `state`
-            não casar com o cookie ou o GitHub recusar o `code` (F4-3).
+            Redirect to `${APP_WEB_URL}/login`. Com o login feito, a resposta traz `Set-Cookie: devfinder_token=<jwt>` (httpOnly,
+            SameSite=Lax, 7 dias; F4-13) e **nenhum token na URL**; o front descobre a sessão com `GET /me`. Sem sessão (sem `Set-Cookie`)
+            se faltar `code`, o `state` não casar com o cookie ou o GitHub recusar o `code` (F4-3).
         "429":
           description: Rate limit do login (10 por minuto por IP; F4-10).
           content:
@@ -595,6 +665,13 @@ paths:
 
 components:
   securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: devfinder_token
+      description: >
+        Sessão do navegador: o JWT num cookie `httpOnly` emitido no callback do OAuth (F4-13), como o `devfinder-api` original. É o caminho
+        do `devfinder-next` (via proxy `/backend`, mesmo site). Vale antes do Bearer quando os dois vêm.
     bearerAuth:
       type: http
       scheme: bearer
@@ -613,6 +690,34 @@ components:
       schema: { type: string }
 
   responses:
+    Unauthorized:
+      description: >
+        `{"error":"Token not provided."}` sem `Authorization`; `{"error":"Token invalid."}` com token adulterado, expirado ou de Dev que não
+        existe (D-2).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: >
+        `{"error":"Forbidden."}`: token válido, mas o dev não é `ADMIN` (RBAC, F5-15). Só `POST /channels` e `POST /video` exigem `ADMIN`;
+        o papel (`devs.role`, `USER` por padrão) se define direto no banco e não aparece no JSON.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ValidationFailed:
+      description: Entrada inválida (D-3).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ValidationError"
+    ReactionTargetNotFound:
+      description: Alvo inexistente ou apagado (`Dev not exists` ou `Channel not exists`).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
     DevAuthenticated:
       description: A JSON object containing data from the authenticated user
       content:
@@ -626,6 +731,36 @@ components:
       required: [error]
       properties:
         error: { type: string, example: "Token invalid." }
+
+    ValidationError:
+      type: object
+      required: [error, errors]
+      properties:
+        error: { type: string, example: "Validation failed." }
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string }
+
+    VideoError:
+      type: object
+      required: [errorMessage]
+      properties:
+        errorMessage: { type: string }
+        title: { type: string }
+        url: { type: string }
+        channel: { type: string }
+        channel_url: { type: string }
+        thumbnail: { type: string }
+
+    VideoExists:
+      allOf:
+        - $ref: "#/components/schemas/Video"
+        - type: object
+          required: [errorMessage]
+          properties:
+            errorMessage: { type: string }
 
     AppInfo:
       type: object

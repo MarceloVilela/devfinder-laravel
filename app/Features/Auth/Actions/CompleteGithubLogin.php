@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Features\Auth\Actions;
 
-use App\Features\Auth\Exceptions\GithubUnavailable;
-use App\Features\Auth\Integrations\GithubClient;
-use App\Features\Auth\Queries\DevProvisioner;
+use App\Shared\Exceptions\GithubUnavailable;
+use App\Shared\Github\GithubClient;
+use App\Features\Dev\Actions\EnsureDev;
 use App\Features\Auth\Support\TokenCodec;
 
 /** `state` conferido, `code` trocado, Dev criado ou reaproveitado e token emitido (F4-2 a F4-8). */
@@ -14,7 +14,7 @@ final class CompleteGithubLogin
 {
     public function __construct(
         private readonly GithubClient $github,
-        private readonly DevProvisioner $devs,
+        private readonly EnsureDev $devs,
         private readonly TokenCodec $tokens,
     ) {}
 
@@ -35,7 +35,7 @@ final class CompleteGithubLogin
             return null;
         }
 
-        return $this->tokens->issue($this->devs->ensure($profile));
+        return $this->tokens->issue(($this->devs)($profile));
     }
 
     private function stateMatches(?string $state, ?string $cookieState): bool

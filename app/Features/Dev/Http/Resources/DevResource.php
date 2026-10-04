@@ -19,18 +19,6 @@ final class DevResource extends JsonResource
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
-        return [
-            '_id' => $this->dev->id,
-            'name' => $this->dev->name,
-            'user' => $this->dev->username,
-            'bio' => $this->dev->bio,
-            'avatar' => $this->dev->avatar,
-            'likes' => $this->dev->likes,
-            'deslikes' => $this->dev->dislikes,
-            'follow' => $this->dev->follow,
-            'ignore' => $this->dev->ignore,
-            'createdAt' => $this->dev->createdAt->toIso8601String(),
-            'updatedAt' => $this->dev->updatedAt->toIso8601String(),
-        ];
+        return $this->dev->toContract();
     }
 }

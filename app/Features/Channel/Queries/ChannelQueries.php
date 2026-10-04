@@ -20,6 +20,12 @@ final class ChannelQueries
         return Channel::query()->with('tags')->orderByRaw('norm_text(name)')->orderBy('id')->get();
     }
 
+    /** Canal ativo com as tags (para a resposta de `POST /channels`). 2 queries. */
+    public function byId(string $id): ?Channel
+    {
+        return Channel::query()->with('tags')->whereKey($id)->first();
+    }
+
     /** Por nome, link ou link alternativo, exato e sem caixa nem acento. 2 queries (1 se não existe). */
     public function byNameOrLink(string $searchQuery): ?Channel
     {

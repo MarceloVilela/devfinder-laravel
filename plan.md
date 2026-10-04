@@ -34,7 +34,7 @@
 | 2b | Esqueleto na nuvem: Bref + Neon + deploy + guardrails de custo + spikes S4 a S7 (gate G0) | L | **concluída** (PR #5 mergeado em 2026-10-03): deploy real feito e verificado; OIDC validado no deploy do PR #6 (2026-10-03; o `sub` imutável exigiu corrigir a confiança da role); pendente a ADR 0004 |
 | 3 | Endpoints públicos de leitura | M | **concluída** (PR #6 mergeado em 2026-10-03; aceite no deploy real em 2026-10-03, `specs/execucao-fase-3.log` seção 7): 10 rotas, 179 testes, G3 nulo local e no deploy real (30 capturas), orçamento de queries testado |
 | 4 | Autenticação (GitHub OAuth + JWT) | M | **implementada local, aguardando o login real e o PR** (branch `fase-4-autenticacao`, `specs/fase-4-autenticacao.md`): `/auth/github`, callback com `state`, `/me`, middlewares, personalização, rate limiting; 259 testes, G3 nulo (40 capturas). SSM, variável `APP_WEB_URL` e política da role feitos; ADR 0013 aceita. Falta: callback do OAuth App na Function URL, login real |
-| 5 | Endpoints autenticados de escrita e relacionamento | M | pendente |
+| 5 | Endpoints autenticados de escrita e relacionamento | M | **implementada local, D-14 adiada, aguardando o aceite no deploy real e o PR** (branch `fase-5-escrita`, `specs/fase-5-escrita.md`): 14 operações, RBAC mínimo (`ADMIN` em canal e vídeo, D-15), 412 testes, G3 de escrita nulo (38 capturas), orçamentos e rate limit de escrita testados |
 | 6 | Ingestão em lote (agendada) | M | pendente |
 | 7 | Observabilidade, desempenho, segurança e verificação contra o deploy real | L | pendente |
 | 8 | Fechamento do `php-laravel` (checklist de long tail, README honesto, plano de fim de vida) | S | pendente |
@@ -502,8 +502,7 @@ estas rotas; orçamento respeitado; evidência em `execucao-fase-3.log`; PR merg
   que o contrato do v1 é preservado.
 - JWT com o **mesmo payload do contrato** (`{ username }`) e `Authorization: Bearer`; **nunca** token em
   query string; expiração definida e documentada; segredo no SSM.
-- Guards/middleware equivalentes a `RequiredAuthFilter` e `OptionalAuthFilter` do v1. **Só Bearer** com `{username}`;
-  o cookie `httpOnly` do original está **fora do escopo** (decisão de 2026-10-02) e vira limitação no README.
+- Guards/middleware equivalentes a `RequiredAuthFilter` e `OptionalAuthFilter` do v1. Bearer com `{username}` **e cookie `httpOnly` `devfinder_token`** (o cookie estava fora do escopo na decisão de 2026-10-02; entrou em 2026-10-04 por causa do front v4, D-16).
   Token válido de Dev inexistente: 401 em rota obrigatória, anônimo em rota opcional (divergência D-2).
 - O GitHub fica atrás de uma interface (`GithubClient`), ligada no ServiceProvider; os testes usam `Http::fake`.
 - `rate limiting` nas rotas de autenticação, **com o store definido no S7** e teste que prova o 429; CORS restrito (origem definida na spec, não `*`).

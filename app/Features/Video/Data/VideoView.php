@@ -22,4 +22,26 @@ final readonly class VideoView
         public CarbonImmutable $createdAt,
         public CarbonImmutable $updatedAt,
     ) {}
+
+    /**
+     * Schema `Video` do contrato (fonte única: o `VideoResource` e os erros 409 usam este método).
+     *
+     * @return array<string, mixed>
+     */
+    public function toContract(): array
+    {
+        return [
+            '_id' => $this->id,
+            'title' => $this->title,
+            'url' => $this->url,
+            'channel_id' => $this->channelId,
+            'channel' => $this->channelName,
+            'channel_url' => $this->channelUrl,
+            'thumbnail' => $this->thumbnail,
+            'viewnum' => $this->viewnum,
+            'date' => $this->publishedAt?->toIso8601String(),
+            'createdAt' => $this->createdAt->toIso8601String(),
+            'updatedAt' => $this->updatedAt->toIso8601String(),
+        ];
+    }
 }

@@ -44,6 +44,14 @@ return [
             'redirect_uri' => env('GITHUB_REDIRECT_URI'),
             'timeout_seconds' => 5,
         ],
+        // Sessão do navegador (F4-13): cookie httpOnly com o JWT, como o `devfinder-api` original. O Bearer segue valendo
+        // (Swagger UI e chamadas servidor a servidor). `lax`: o navegador só chega à API pelo proxy do front (mesmo site).
+        'session_cookie' => [
+            'name' => 'devfinder_token',
+            'path' => '/',
+            'same_site' => 'lax',
+            'secure' => env('APP_ENV') === 'production',
+        ],
         'state_cookie' => [
             'name' => 'devfinder_oauth_state',
             'path' => '/v1/auth',
@@ -51,5 +59,6 @@ return [
             'secure' => env('APP_ENV') === 'production',
         ],
         'rate_limit_per_minute' => 10,
+        'writes_per_minute' => 30,
     ],
 ];

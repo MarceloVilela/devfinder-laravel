@@ -46,19 +46,23 @@ arch('controllers são final e invocáveis')
     ->toBeFinal()
     ->toHaveMethod('__invoke');
 
-// "Uma feature usa outra só por Actions e Data" (arquitetura-alvo.md): hoje nenhuma usa a outra; a identidade do token
-// vem de `Shared\Auth`. A regra impede o acoplamento de voltar escondido.
+// "Uma feature usa outra só por Actions e Data" (arquitetura-alvo.md). Uma feature pode usar `Actions` e `Data` de outra
+// (ex.: `Auth` e `Channel` chamam `Dev\Actions\EnsureDev`); `Queries`, `Models`, `Http`, `Support` e `Console` de outra não.
 $features = ['Auth', 'Channel', 'Description', 'Dev', 'Info', 'Search', 'Video'];
+$internals = ['Queries', 'Models', 'Http', 'Support', 'Console', 'Exceptions'];
 
 foreach ($features as $feature) {
-    $others = array_map(
-        static fn(string $other): string => "App\\Features\\{$other}",
-        array_values(array_filter($features, static fn(string $other): bool => $other !== $feature)),
-    );
+    $forbidden = [];
 
-    arch("{$feature} não importa outra feature")
+    foreach (array_filter($features, static fn(string $other): bool => $other !== $feature) as $other) {
+        foreach ($internals as $internal) {
+            $forbidden[] = "App\\Features\\{$other}\\{$internal}";
+        }
+    }
+
+    arch("{$feature} só usa Actions e Data de outra feature")
         ->expect("App\\Features\\{$feature}")
-        ->not->toUse($others);
+        ->not->toUse($forbidden);
 }
 
 arch('o segredo do JWT e do GitHub só é lido pelas bordas')

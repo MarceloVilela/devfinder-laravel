@@ -66,16 +66,19 @@ Content-Type: application/json
 
 { "username": "octocat" }
 
-### POST /devs — username que não existe no GitHub (achado real desta fase)
-# Esperado: 500 — `DevModel::findOrCreate` lança `RuntimeException` explícita (achado real:
-# sem essa guarda, `avatar` fica vazio, a validação `required` falha, `insert()` devolve
-# `false`, e `$this->find(false)` do CI4 devolve TODOS os registros da tabela em vez de
-# nenhum — bug real do framework, não hipotético, reproduzido rodando de verdade. Corrigido
-# lançando um erro claro em vez de deixar isso silencioso). Limitação aceita: um username
-# genuinamente inexistente no GitHub não tem como virar um Dev válido sem avatar — o original
-# também não tinha um caminho de sucesso pra esse caso, só falhava de um jeito bem pior.
+### POST /devs — username que não existe no GitHub (D-6)
+# php-laravel: 404, {"error":"GitHub user not found."} (o v1 devolvia 500, `RuntimeException` sem tratamento; divergência D-6).
+# GitHub fora do ar ou no limite da API (60 por hora sem token): 502, {"error":"GitHub unavailable."}.
 POST {{baseUrl}}/devs
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
-{ "username": "usuario-que-nao-existe-de-verdade-no-github-xyz999" }
+{ "username": "usuario-inexistente-xyz999" }
+
+### POST /devs — username fora do formato de login do GitHub (F5-7)
+# Esperado: 422, {"error":"Validation failed.","errors":{"username":[...]}}; nunca chega ao GitHub (o valor entra na URL da API).
+POST {{baseUrl}}/devs
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{ "username": "../../orgs/x" }

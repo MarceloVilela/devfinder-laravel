@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Features\Auth\Integrations\GithubClient;
-use App\Features\Auth\Integrations\HttpGithubClient;
+use App\Shared\Github\GithubClient;
+use App\Shared\Github\HttpGithubClient;
+use App\Features\Auth\Support\SessionCookie;
 use App\Features\Auth\Support\TokenCodec;
+use App\Shared\Auth\AuthenticatedDev;
 use App\Shared\Support\ConfigKeys;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
@@ -26,6 +28,8 @@ final class AppServiceProvider extends ServiceProvider
             self::number(config('devfinder.auth.jwt_ttl_seconds')),
         ));
 
+        $this->app->bind(SessionCookie::class, fn(): SessionCookie => SessionCookie::fromConfig());
+
         $this->app->bind(GithubClient::class, fn(): GithubClient => new HttpGithubClient(
             self::text(config('devfinder.auth.github.client_id')),
             self::text(config('devfinder.auth.github.client_secret')),
@@ -41,6 +45,10 @@ final class AppServiceProvider extends ServiceProvider
         // F4-10: só as rotas de login; o limite vem de config e o store é o `cache.limiter` (ADR 0011).
         RateLimiter::for('auth', fn(Request $request): Limit => Limit::perMinute(self::number(config('devfinder.auth.rate_limit_per_minute')))
             ->by((string) $request->ip()));
+
+        // F5-12: escrita sensível, por dev (o `auth` roda antes e deixa o dev na requisição); sem token cai no IP.
+        RateLimiter::for('writes', fn(Request $request): Limit => Limit::perMinute(self::number(config('devfinder.auth.writes_per_minute')))
+            ->by($request->attributes->get(AuthenticatedDev::ATTRIBUTE) instanceof AuthenticatedDev ? $request->attributes->get(AuthenticatedDev::ATTRIBUTE)->id : (string) $request->ip()));
 
         if (! self::$booted && ! $this->app->runningInConsole()) {
             self::$booted = true;

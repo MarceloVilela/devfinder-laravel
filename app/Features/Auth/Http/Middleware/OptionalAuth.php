@@ -6,6 +6,7 @@ namespace App\Features\Auth\Http\Middleware;
 
 use App\Features\Auth\Queries\DevLookup;
 use App\Features\Auth\Support\TokenCodec;
+use App\Features\Auth\Support\TokenSource;
 use App\Shared\Auth\AuthenticatedDev;
 use Closure;
 use Illuminate\Http\Request;
@@ -16,20 +17,18 @@ final class OptionalAuth
 {
     public function __construct(
         private readonly TokenCodec $tokens,
+        private readonly TokenSource $source,
         private readonly DevLookup $devs,
     ) {}
 
     public function handle(Request $request, Closure $next): Response
     {
-        $header = $request->headers->get('Authorization');
+        $token = $this->source->read($request);
+        $username = $token === null || $token === '' ? null : $this->tokens->username($token);
+        $dev = $username === null ? null : $this->devs->byUsername($username);
 
-        if ($header !== null && preg_match('/^Bearer +(\S+)$/i', trim($header), $matches) === 1) {
-            $username = $this->tokens->username($matches[1]);
-            $dev = $username === null ? null : $this->devs->byUsername($username);
-
-            if ($dev !== null) {
-                $request->attributes->set(AuthenticatedDev::ATTRIBUTE, $dev);
-            }
+        if ($dev !== null) {
+            $request->attributes->set(AuthenticatedDev::ATTRIBUTE, $dev);
         }
 
         return $next($request);
