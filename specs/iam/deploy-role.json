@@ -1,5 +1,5 @@
 {
-  "_comentario": "Política da role de deploy do GitHub Actions (OIDC). Escopo mínimo por nome (prefixo devfinder-laravel-prod). LEVANTADA POR LEITURA do template do osls, ainda NÃO validada por um deploy real: ajustar por tentativa e registrar em specs/spikes/s5-oidc-deploy.md. <ACCOUNT_ID> e <REGION> são trocados por scripts/aws-bootstrap.sh.",
+  "_comentario": "Política da role de deploy do GitHub Actions (OIDC). Escopo mínimo por nome (prefixo devfinder-laravel-prod). Levantada por leitura do template do osls e VALIDADA por deploy real pelo OIDC (2026-10-03, PR #6: sem ajuste). A Fase 4 acrescentou só a leitura dos parâmetros do SSM, para o deploy falhar cedo se faltar um segredo. <ACCOUNT_ID> e <REGION> são trocados por scripts/aws-bootstrap.sh.",
   "Version": "2012-10-17",
   "Statement": [
     {
@@ -82,6 +82,12 @@
       "Effect": "Allow",
       "Action": ["lambda:GetFunctionConfiguration", "lambda:GetFunctionUrlConfig"],
       "Resource": "arn:aws:lambda:<REGION>:<ACCOUNT_ID>:function:devfinder-laravel-prod-*"
+    },
+    {
+      "Sid": "LeituraDosParametrosDaAplicacao",
+      "Effect": "Allow",
+      "Action": "ssm:GetParameters",
+      "Resource": "arn:aws:ssm:<REGION>:<ACCOUNT_ID>:parameter/devfinder-laravel/prod/*"
     }
   ]
 }

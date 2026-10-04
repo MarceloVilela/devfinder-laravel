@@ -18,3 +18,8 @@ parameters:
             identifier: method.notFound
             message: '#Call to an undefined method Pest\\PendingCalls\\TestCall::#'
             path: tests
+        # Mesma causa: o `$this` do closure passado a um helper (`startLogin($this)`) chega como TestCall. Só os helpers de login.
+        -
+            identifier: argument.type
+            message: '#Parameter \#1 \$test of function (startLogin|callback) expects Tests\\TestCase, Pest\\PendingCalls\\TestCall given\.#'
+            path: tests

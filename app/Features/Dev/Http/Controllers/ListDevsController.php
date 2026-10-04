@@ -16,7 +16,7 @@ final class ListDevsController
 
     public function __invoke(PageRequest $request): JsonResponse
     {
-        $result = $this->devs->page($request->pageNumber());
+        $result = $this->devs->page($request->pageNumber(), $request->actor()?->id);
 
         return response()->json($result->envelope(
             static fn(DevView $dev): array => (new DevResource($dev))->resolve(),

@@ -6,6 +6,9 @@ use App\Features\Docs\Http\Controllers\ShowDocsController;
 use App\Features\Docs\Http\Controllers\ShowOpenApiController;
 use App\Features\Health\Http\Controllers\ShowHealthController;
 use App\Features\Health\Http\Controllers\ShowHealthDbController;
+use App\Features\Auth\Console\MintToken;
+use App\Features\Auth\Http\Middleware\OptionalAuth;
+use App\Features\Auth\Http\Middleware\RequireAuth;
 use App\Shared\Console\ConfigCheck;
 use App\Shared\Http\ErrorRenderer;
 use App\Shared\Http\Middleware\AssignRequestId;
@@ -28,10 +31,11 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::get('/docs/openapi.yaml', ShowOpenApiController::class)->name('docs.openapi');
         },
     )
-    ->withCommands([ConfigCheck::class])
+    ->withCommands([ConfigCheck::class, MintToken::class])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(AssignRequestId::class);
         $middleware->api(append: [RejectMalformedInput::class]);
+        $middleware->alias(['auth' => RequireAuth::class, 'auth.optional' => OptionalAuth::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(fn(): bool => true);

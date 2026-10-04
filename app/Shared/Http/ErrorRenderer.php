@@ -11,6 +11,7 @@ use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Throwable;
 
 /**
@@ -35,6 +36,10 @@ final class ErrorRenderer
 
         if ($e instanceof MethodNotAllowedHttpException) {
             return response()->json(['error' => 'Method not allowed.'], 405, $e->getHeaders());
+        }
+
+        if ($e instanceof TooManyRequestsHttpException) {
+            return response()->json(['error' => 'Too many requests.'], 429, $e->getHeaders());
         }
 
         if ($e instanceof HttpExceptionInterface) {

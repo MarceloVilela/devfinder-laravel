@@ -35,3 +35,8 @@ test('sem templates é reprovado', () => assert.match(check(fs.mkdtempSync(path.
 test('APP_DEBUG ligado é reprovado', () => assert.match(run((t) => { t.Resources.Fn.Properties.Environment.Variables.APP_DEBUG = 'true'; })[0], /APP_DEBUG/));
 test('APP_ENV diferente de production é reprovado', () => assert.match(run((t) => { t.Resources.Fn.Properties.Environment.Variables.APP_ENV = 'local'; })[0], /APP_ENV/));
 test('CORS com curinga é reprovado', () => assert.match(run((t) => { t.Resources.Fn.Properties.Environment.Variables.CORS_ALLOWED_ORIGINS = 'https://a.test, *'; })[0], /curinga/));
+test('JWT_SECRET em texto é reprovado (Fase 4)', () => assert.match(run((t) => { t.Resources.Fn.Properties.Environment.Variables.JWT_SECRET = 'a'.repeat(40); })[0], /JWT_SECRET/));
+test('GITHUB_CLIENT_SECRET em texto é reprovado (Fase 4)', () => assert.match(run((t) => { t.Resources.Fn.Properties.Environment.Variables.GITHUB_CLIENT_SECRET = 'abc123'; })[0], /GITHUB_CLIENT_SECRET/));
+test('segredos da Fase 4 por bref-ssm: passam', () => assert.deepEqual(run((t) => {
+  Object.assign(t.Resources.Fn.Properties.Environment.Variables, { JWT_SECRET: 'bref-ssm:/x/jwt-secret', GITHUB_CLIENT_SECRET: 'bref-ssm:/x/github-client-secret' });
+}), []));

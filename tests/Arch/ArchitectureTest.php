@@ -45,3 +45,22 @@ arch('controllers são final e invocáveis')
     ->expect('App\Features\*\Http\Controllers')
     ->toBeFinal()
     ->toHaveMethod('__invoke');
+
+// "Uma feature usa outra só por Actions e Data" (arquitetura-alvo.md): hoje nenhuma usa a outra; a identidade do token
+// vem de `Shared\Auth`. A regra impede o acoplamento de voltar escondido.
+$features = ['Auth', 'Channel', 'Description', 'Dev', 'Info', 'Search', 'Video'];
+
+foreach ($features as $feature) {
+    $others = array_map(
+        static fn(string $other): string => "App\\Features\\{$other}",
+        array_values(array_filter($features, static fn(string $other): bool => $other !== $feature)),
+    );
+
+    arch("{$feature} não importa outra feature")
+        ->expect("App\\Features\\{$feature}")
+        ->not->toUse($others);
+}
+
+arch('o segredo do JWT e do GitHub só é lido pelas bordas')
+    ->expect(['Firebase\JWT'])
+    ->toOnlyBeUsedIn('App\Features\Auth\Support');

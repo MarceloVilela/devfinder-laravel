@@ -33,7 +33,7 @@
 | 2a | Esqueleto local: qualidade, CI, teste de arquitetura, erros, `/docs` e `config:check` | M | **concluída** (PR #4 mergeado em 2026-10-03) |
 | 2b | Esqueleto na nuvem: Bref + Neon + deploy + guardrails de custo + spikes S4 a S7 (gate G0) | L | **concluída** (PR #5 mergeado em 2026-10-03): deploy real feito e verificado; OIDC validado no deploy do PR #6 (2026-10-03; o `sub` imutável exigiu corrigir a confiança da role); pendente a ADR 0004 |
 | 3 | Endpoints públicos de leitura | M | **concluída** (PR #6 mergeado em 2026-10-03; aceite no deploy real em 2026-10-03, `specs/execucao-fase-3.log` seção 7): 10 rotas, 179 testes, G3 nulo local e no deploy real (30 capturas), orçamento de queries testado |
-| 4 | Autenticação (GitHub OAuth + JWT) | M | pendente |
+| 4 | Autenticação (GitHub OAuth + JWT) | M | **implementada local, aguardando o login real e o PR** (branch `fase-4-autenticacao`, `specs/fase-4-autenticacao.md`): `/auth/github`, callback com `state`, `/me`, middlewares, personalização, rate limiting; 259 testes, G3 nulo (40 capturas). SSM, variável `APP_WEB_URL` e política da role feitos; ADR 0013 aceita. Falta: callback do OAuth App na Function URL, login real |
 | 5 | Endpoints autenticados de escrita e relacionamento | M | pendente |
 | 6 | Ingestão em lote (agendada) | M | pendente |
 | 7 | Observabilidade, desempenho, segurança e verificação contra o deploy real | L | pendente |

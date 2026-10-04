@@ -45,6 +45,15 @@ jobs:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: us-east-2
 
+      # Fail-closed: sem o parâmetro, o `bref-ssm:` derrubaria o cold start de TODAS as rotas (Fase 4 adicionou segredos).
+      - name: Parâmetros do SSM e variáveis existem
+        env:
+          APP_WEB_URL: ${{ vars.APP_WEB_URL }}
+        run: |
+          test -n "$APP_WEB_URL" || { echo "variável APP_WEB_URL vazia"; exit 1; }
+          MISSING="$(aws ssm get-parameters --names /devfinder-laravel/prod/app-key /devfinder-laravel/prod/db-url /devfinder-laravel/prod/jwt-secret /devfinder-laravel/prod/github-client-id /devfinder-laravel/prod/github-client-secret --query 'InvalidParameters' --output text)"
+          test -z "$MISSING" || { echo "parâmetros ausentes no SSM: $MISSING"; exit 1; }
+
       - name: Dependências de produção
         run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress
 
@@ -60,7 +69,7 @@ jobs:
         run: scripts/package.sh
 
       - name: Deploy
-        run: npx --yes osls@4.4.0 deploy --stage prod --conceal --param="corsOrigins=${{ vars.CORS_ALLOWED_ORIGINS }}"
+        run: npx --yes osls@4.4.0 deploy --stage prod --conceal --param="corsOrigins=${{ vars.CORS_ALLOWED_ORIGINS }}" --param="webUrl=${{ vars.APP_WEB_URL }}"
 
       - name: Smoke test (falha o pipeline)
         env:

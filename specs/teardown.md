@@ -10,7 +10,7 @@
 | Onde | Recurso | Como nasce | Como remove |
 |---|---|---|---|
 | AWS `us-east-2` | stack `devfinder-laravel-prod`: Lambda `devfinder-laravel-prod-web`, Function URL, role de execução, log group (7 dias), bucket de artefatos do osls | `osls deploy` | `npx osls@4.4.0 remove --stage prod` |
-| AWS SSM | `/devfinder-laravel/prod/app-key` e `/devfinder-laravel/prod/db-url` (SecureString) | manual (`aws ssm put-parameter`) | passo 3 |
+| AWS SSM | `/devfinder-laravel/prod/{app-key,db-url,jwt-secret,github-client-id,github-client-secret}` (SecureString) | manual (`aws ssm put-parameter`) | passo 3 |
 | AWS IAM | provedor OIDC do GitHub e role `devfinder-laravel-github-deploy` | `scripts/aws-bootstrap.sh --apply` | passo 4 |
 | AWS Budgets | `devfinder-laravel-consumo-bruto` (o `Orcamento USD 0,01` é anterior ao projeto: **não remover**) | `scripts/aws-bootstrap.sh --apply` | passo 5 |
 | Neon | projeto `devfinder-laravel` (`aws-us-east-2`) | criado à mão | passo 6 |
@@ -27,7 +27,7 @@
    `aws lambda list-functions --region us-east-2` e `aws s3 ls | grep devfinder-laravel`. Se um log group ficou
    (`aws logs describe-log-groups --log-group-name-prefix /aws/lambda/devfinder-laravel`), remover com `aws logs delete-log-group`.
 3. **Parâmetros do SSM**:
-   `aws ssm delete-parameters --region us-east-2 --names /devfinder-laravel/prod/app-key /devfinder-laravel/prod/db-url`
+   `aws ssm delete-parameters --region us-east-2 --names /devfinder-laravel/prod/app-key /devfinder-laravel/prod/db-url /devfinder-laravel/prod/jwt-secret /devfinder-laravel/prod/github-client-id /devfinder-laravel/prod/github-client-secret`
 4. **IAM**: `aws iam delete-role-policy --role-name devfinder-laravel-github-deploy --policy-name deploy`, depois
    `aws iam delete-role --role-name devfinder-laravel-github-deploy` e, se **nenhum outro projeto** usa o GitHub como emissor,
    `aws iam delete-open-id-connect-provider --open-id-connect-provider-arn arn:aws:iam::<ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com`.

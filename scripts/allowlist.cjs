@@ -42,6 +42,10 @@ function check(dir) {
         if (vars.APP_DEBUG !== 'false') problems.push(`${f}: APP_DEBUG deve ser 'false' (veio ${JSON.stringify(vars.APP_DEBUG)})`);
         if (vars.APP_ENV !== 'production') problems.push(`${f}: APP_ENV deve ser 'production' (veio ${JSON.stringify(vars.APP_ENV)})`);
         if (/^\*$/.test(String(vars.CORS_ALLOWED_ORIGINS || '').trim()) || String(vars.CORS_ALLOWED_ORIGINS || '').split(',').some((o) => o.trim() === '*')) problems.push(`${f}: CORS_ALLOWED_ORIGINS com curinga (D-4)`);
+        // Segredos só por referência ao SSM (resolvida pelo runtime do Bref), nunca em texto na configuração da função.
+        for (const k of ['APP_KEY', 'DB_URL', 'JWT_SECRET', 'GITHUB_CLIENT_SECRET']) {
+          if (vars[k] !== undefined && !String(vars[k]).startsWith('bref-ssm:')) problems.push(`${f}: ${k} deve ser bref-ssm:, não texto`);
+        }
         for (const [k, v] of Object.entries(vars)) {
           if (typeof v !== 'string') continue;
           for (const [re, why] of SECRET_PATTERNS) if (re.test(v)) problems.push(`${f}: variável ${k} com ${why}`);

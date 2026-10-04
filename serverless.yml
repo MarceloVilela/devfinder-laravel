@@ -16,12 +16,18 @@ provider:
         APP_KEY: bref-ssm:/devfinder-laravel/${sls:stage}/app-key
         DB_CONNECTION: pgsql
         DB_URL: bref-ssm:/devfinder-laravel/${sls:stage}/db-url   # URL POOLED (runtime); a direta fica só no CI
-        CACHE_STORE: array        # ADR 0011: `database` entra com o rate limiting, na Fase 4
+        CACHE_STORE: array
+        CACHE_LIMITER_STORE: database   # ADR 0011: o `array` zera a cada requisição, então o limite do login nunca dispararia
         SESSION_DRIVER: array
         QUEUE_CONNECTION: sync
         LOG_CHANNEL: json         # config/logging.php: JSON no stderr (CloudWatch), com request_id
         LOG_LEVEL: info
         CORS_ALLOWED_ORIGINS: ${param:corsOrigins}   # D-4: origem explícita, nunca `*`
+        # Fase 4 (ADR 0013). Os parâmetros do SSM precisam EXISTIR antes do deploy: `bref-ssm:` de um parâmetro ausente derruba o cold start.
+        JWT_SECRET: bref-ssm:/devfinder-laravel/${sls:stage}/jwt-secret
+        GITHUB_CLIENT_ID: bref-ssm:/devfinder-laravel/${sls:stage}/github-client-id
+        GITHUB_CLIENT_SECRET: bref-ssm:/devfinder-laravel/${sls:stage}/github-client-secret
+        APP_WEB_URL: ${param:webUrl}   # URL do frontend: destino do redirect do login
     iam:
         role:
             statements:

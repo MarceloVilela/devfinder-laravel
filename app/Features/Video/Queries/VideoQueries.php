@@ -16,13 +16,35 @@ use stdClass;
 final class VideoQueries
 {
     /**
-     * 2 queries: contagem e página.
+     * 2 queries (+1 com `?user=`, +1 do middleware com token): contagem e página.
      *
      * @return Paginated<VideoView>
      */
-    public function trending(int $requested): Paginated
+    public function trending(int $requested, ?string $actorId = null, ?string $username = null): Paginated
     {
-        return $this->paginate($this->base(), $requested);
+        $devId = $actorId ?? $this->devIdByUsername($username);
+        $query = $this->base();
+
+        if ($devId !== null) {
+            $query->whereNotIn(
+                'videos.channel_id',
+                DB::table('channel_reactions')->select('channel_id')->where('dev_id', $devId)->where('type', 'ignore'),
+            );
+        }
+
+        return $this->paginate($query, $requested);
+    }
+
+    /** `?user=` identifica o dev sem token (paridade com o v1 e o original); desconhecido segue anônimo. 1 query. */
+    private function devIdByUsername(?string $username): ?string
+    {
+        if ($username === null || $username === '') {
+            return null;
+        }
+
+        $id = DB::table('devs')->whereNull('deleted_at')->whereRaw(NormText::equals('username'), [$username])->value('id');
+
+        return is_string($id) ? $id : null;
     }
 
     /**

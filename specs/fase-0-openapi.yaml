@@ -405,7 +405,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/Dev"
         "400":
-          description: Bad Request
+          description: Bad Request (herdado do original, `DevProfile not exists`; nesta stack o caso vira 401, D-2)
+        "401":
+          description: >
+            `{"error":"Token not provided."}` sem `Authorization`; `{"error":"Token invalid."}` com token
+            adulterado, expirado ou de Dev que não existe (D-2).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
   /likes/devs/{username}:
     post:
@@ -540,7 +548,15 @@ paths:
       x-auth: public
       responses:
         "302":
-          description: Redirect to GitHub OAuth consent screen
+          description: >
+            Redirect to GitHub OAuth consent screen, com `state` aleatório e o mesmo valor no cookie `devfinder_oauth_state`
+            (HttpOnly, SameSite=Lax; F4-2).
+        "429":
+          description: Rate limit do login (10 por minuto por IP; F4-10).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
   /auth/github/callback:
     get:
@@ -561,7 +577,21 @@ paths:
           schema: { type: string }
       responses:
         "302":
-          description: Redirect to `${APP_WEB_URL}/login?token=<jwt>`
+          description: >
+            Redirect to `${APP_WEB_URL}/login?token=<jwt>`; sem token (`${APP_WEB_URL}/login`) se faltar `code`, o `state`
+            não casar com o cookie ou o GitHub recusar o `code` (F4-3).
+        "429":
+          description: Rate limit do login (10 por minuto por IP; F4-10).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: GitHub indisponível (D-12).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
 components:
   securitySchemes:
@@ -591,6 +621,12 @@ components:
             $ref: "#/components/schemas/Dev"
 
   schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string, example: "Token invalid." }
+
     AppInfo:
       type: object
       properties:
