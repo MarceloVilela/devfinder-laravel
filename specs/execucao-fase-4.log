@@ -1,0 +1,91 @@
+# Execução da Fase 4 — autenticação (GitHub OAuth + JWT) (2026-10-04)
+# Ambiente local: docker compose (app :8082, PostgreSQL 18), dataset de paridade; v1 local (:8081) com o mesmo dataset. Login real: PENDENTE (depende do OAuth App do usuário).
+
+## 1. Gates (container limpo, .env do workflow: scripts/reproduz-ci.sh)
+==== gera .env do CI (só as chaves que o workflow define)
+==== composer validate --strict
+==== composer install
+==== composer audit
+No security vulnerability advisories found.
+==== chave da aplicação
+==== pint --test
+    PASS   ......................................................... 128 files  
+==== larastan nível 9 (sem baseline)
+ [OK] No errors                                                                 
+==== config:check
+==== migrate e rollback e migrate (reversível)
+==== paridade de rotas: nada registrado fora do contrato
+==== pest (Feature, Contract, Arch)
+  Tests:    259 passed (793 assertions)
+==================================================
+EXIT=0
+
+## 2. Pacote e allowlist (scripts/reproduz-package.sh) e testes das ferramentas
+-rw-rw-r-- 1 marcelo marcelo 16885378 Oct  4 14:37 .serverless/devfinder-laravel.zip
+allowlist OK (8 tipos permitidos)
+EXIT=0
+ℹ tests 24
+ℹ pass 24
+ℹ fail 0
+
+## 3. Simulação local de produção (scripts/smoke-local-prod.sh: config:check de produção, migrate e smoke)
+Configuração completa: APP_KEY, DB_URL, CORS_ALLOWED_ORIGINS, JWT_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, APP_WEB_URL
+ok   GET /v1/me sem token dá 401 no formato do contrato
+ok   GET /v1/me com token inválido dá 401
+ok   token na query string nunca vale
+ok   GET /v1/auth/github redireciona (302)
+ok   redirect vai ao GitHub com state
+ok   redirect não pede scope
+ok   cookie do state é HttpOnly e SameSite=Lax
+ok   callback com state inválido volta ao front (302)
+ok   callback com state inválido não entrega token
+SMOKE OK
+
+## 4. G3 — v1 x php-laravel com token (40 capturas: 30 anônimas da Fase 3 + /me, /devs e /feed/trending personalizados, 401)
+# Token de dev01 de cada lado (segredos diferentes): v1 'php spark token:mint dev01', php-laravel 'artisan auth:mint-token dev01'.
+$ G3_TOKEN=<v1> node specs/tools/capture-g3.cjs http://localhost:8081/v1 v1a.json && G3_TOKEN=<laravel> ... http://localhost:8082/v1 laravela.json
+IGUAIS após a normalização
+exit=0
+status e content-type iguais nas 40 capturas
+  AUTH(dev01) GET /me                                            200 
+  AUTH(anonimo) GET /me                                          401 
+  AUTH(garbage) GET /me                                          401 
+  AUTH(dev01) GET /devs?page=1                                   200 total=32
+  AUTH(dev01) GET /devs?page=2                                   200 total=32
+  AUTH(garbage) GET /devs?page=1                                 200 total=35
+  AUTH(dev01) GET /feed/trending?page=1                          200 total=20
+  AUTH(dev01) GET /feed/trending?page=2                          200 total=20
+  AUTH(anonimo) GET /feed/trending?page=1&user=dev01             200 total=20
+  AUTH(anonimo) GET /feed/trending?page=1&user=fantasma          200 total=55
+
+## 5. auth.http no ambiente local (httpyac; tokens sintéticos de auth:mint-token)
+=== auth-github (fluxo GitHub OAuth completo — MANUAL, é redirect de navegador) ===
+=== GET /auth/github — só a parte do redirect, sem seguir ===
+=> 302 (134 ms)
+=== GET /auth/github/callback — sem `code` (caminho de falha, ex.: usuário negou no GitHub) ===
+=> 302 (62 ms)
+=== GET /auth/github/callback — state que não casa com o cookie (CSRF de login) ===
+=> 302 (53 ms)
+=== GET /me — sem token ===
+=> 401 (15 ms)
+=== GET /me — token malformado ===
+=> 401 (15 ms)
+=== GET /me — token válido ===
+=> 200 (46 ms)
+=== GET /me — token de username inexistente ===
+=> 401 (38 ms)
+=== GET /me — token na query string (nunca aceito) ===
+=> 401 (16 ms)
+9 requests processed (9 succeeded)
+
+## 6. Redirect de login e rate limiting (store database, ADR 0011)
+HTTP/1.1 302 Found
+Cache-Control: no-store, private
+Location: https://github.com/login/oauth/authorize?client_id=local-client-id&state=<64hex>
+Set-Cookie: devfinder_oauth_state=<64hex>; Max-Age=600; path=/v1/auth; httponly; samesite=lax
+12 pedidos seguidos a /v1/auth/github (limite 10/min, alguns já gastos acima):
+302 302 302 302 302 302 429 429 429 429 429 429 
+HTTP/1.1 429 Too Many Requests
+Retry-After: 59
+{"error":"Too many requests."}
+/v1/me e /v1/devs não são limitados (12 pedidos): 200 200 200 200 200 200 200 200 200 200 200 200 

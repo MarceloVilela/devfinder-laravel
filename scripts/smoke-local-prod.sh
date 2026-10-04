@@ -20,7 +20,8 @@ docker compose exec -T db psql -U devfinder -c "create database $DBN owner devfi
 
 KEY="base64:$(head -c32 /dev/urandom | base64)"
 ENVS="-e APP_ENV=production -e APP_DEBUG=false -e APP_KEY=$KEY -e DB_CONNECTION=pgsql -e DB_URL=postgresql://devfinder:devfinder@db:5432/$DBN
- -e CORS_ALLOWED_ORIGINS=https://app.example.test -e LOG_CHANNEL=json -e CACHE_STORE=array -e SESSION_DRIVER=array"
+ -e CORS_ALLOWED_ORIGINS=https://app.example.test -e APP_WEB_URL=https://app.example.test
+ -e JWT_SECRET=$(head -c32 /dev/urandom | base64 | tr -d '/+=') -e GITHUB_CLIENT_ID=smoke-client -e GITHUB_CLIENT_SECRET=smoke-secret -e LOG_CHANNEL=json -e CACHE_STORE=array -e SESSION_DRIVER=array"
 NET=php-laravel_default
 # shellcheck disable=SC2086
 docker run --rm --network "$NET" -v "$WORK/repo":/app -w /app $ENVS devfinder-php sh -c 'php artisan config:check && php artisan migrate --force | tail -3'

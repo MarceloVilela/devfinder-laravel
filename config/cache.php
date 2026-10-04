@@ -34,6 +34,12 @@ return [
     |
     */
 
+    /*
+    | Store do rate limiting (ADR 0011): `database` no Lambda, porque o `array` zera a cada requisição.
+    | Vazio = o store padrão.
+    */
+    'limiter' => env('CACHE_LIMITER_STORE'),
+
     'stores' => [
 
         'array' => [

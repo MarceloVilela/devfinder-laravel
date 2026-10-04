@@ -7,6 +7,6 @@ composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist -
 # NÃO rodar `config:cache` aqui: o bref/laravel-bridge cacheia a config no cold start (em /tmp), com as variáveis reais.
 # Cachear no build congelaria no pacote os valores do CI.
 rm -rf .serverless
-npx --yes osls@4.4.0 package --stage "${STAGE:-prod}"
+npx --yes osls@4.4.0 package --stage "${STAGE:-prod}" --param="corsOrigins=https://app.example.test" --param="webUrl=https://app.example.test"
 ls -la .serverless/*.zip .serverless/cloudformation-template-update-stack.json
 node scripts/allowlist.cjs .serverless

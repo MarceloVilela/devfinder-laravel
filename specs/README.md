@@ -7,7 +7,7 @@ Metodologia: ver [`../plan.md`](../plan.md). Spec antes do código; um PR por fa
 | [`fase-0-especificacao.md`](./fase-0-especificacao.md) | em execução (2026-10-02): achados, decisões do usuário e pendências |
 | [`fase-0-openapi.yaml`](./fase-0-openapi.yaml) | copiado do v1 e ajustado; revalidado contra o v1 (strict); campos `nullable` e exemplos sintéticos aplicados |
 | [`acceptance/`](./acceptance/) | 9 `.http` por feature (62 requisições, 19 arquivos do v1 condensados + `app` e `search` novos); ambientes `v1`, `local`, `real`; sem `*.private.*` |
-| [`adr/`](./adr/README.md) | 12 ADRs: 11 aceitas (0001–0003, 0005–0012), 0004 `proposta` |
+| [`adr/`](./adr/README.md) | 13 ADRs: 12 aceitas (0001–0003, 0005–0013), 0004 `proposta` |
 | [`erros-v1.md`](./erros-v1.md) | inventário de erros do v1 (lido do código, não executado) |
 | [`auditoria-original.md`](./auditoria-original.md) | 15 achados + registro de divergências (D-1 a D-11 aprovadas) |
 | [`arquitetura-alvo.md`](./arquitetura-alvo.md) | estrutura, regras e mapa das 30 operações por fase |
@@ -20,4 +20,5 @@ Metodologia: ver [`../plan.md`](../plan.md). Spec antes do código; um PR por fa
 | [`fase-2a-esqueleto-local.md`](./fase-2a-esqueleto-local.md) | spec da Fase 2a; evidência em `execucao-fase-2a.log` e `spikes/2a-ferramentas.md` (Gesso, Pest `arch()`, DTO `readonly`, Scramble) |
 | [`fase-2b-esqueleto-nuvem.md`](./fase-2b-esqueleto-nuvem.md) | spec da Fase 2b; evidência local em `execucao-fase-2b.log` e `spikes/s5-s6-fase-2b.md`; `teardown.md` (rascunho) e `iam/` (política da role de deploy, **ainda não validada por deploy**) |
 | [`fase-3-leitura-publica.md`](./fase-3-leitura-publica.md) | spec da Fase 3 (decisões F3-1 a F3-10); evidência local em `execucao-fase-3.log`; G3 nulo nas rotas 1 a 9 |
-| `fase-4-*.md` em diante | não escritos |
+| [`fase-4-autenticacao.md`](./fase-4-autenticacao.md) | spec da Fase 4 (decisões F4-1 a F4-12); ADR 0013 **aceita** (2026-10-04); divergências D-12 e D-13 aprovadas (2026-10-04); evidência local em `execucao-fase-4.log` |
+| `fase-5-*.md` em diante | não escritos |

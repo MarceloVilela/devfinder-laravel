@@ -2,7 +2,7 @@
 
 Formato: **Status** (`proposta` → `aceita` → `substituída`), Contexto, Decisão, Alternativas, Custo e
 **Critério de reversão**. Nenhuma ADR vira `aceita` antes de a evidência que ela cita existir
-(spike medido, teste real) e da aprovação do usuário. Aceitas em 2026-10-03: 0001, 0002, 0003, 0005, 0006, 0007, 0008, 0009, 0010, 0011 e 0012. Segue `proposta` por decisão do usuário (2026-10-03): 0004, aceita na Fase 2b (evidência parcial do S6). A 0006 foi aceita com evidência parcial; a completa vem na Fase 3.
+(spike medido, teste real) e da aprovação do usuário. Aceitas em 2026-10-03: 0001, 0002, 0003, 0005, 0006, 0007, 0008, 0009, 0010, 0011 e 0012; em 2026-10-04: 0013. Segue `proposta` por decisão do usuário (2026-10-03): 0004, aceita na Fase 2b (evidência parcial do S6). A 0006 foi aceita com evidência parcial; a completa vem na Fase 3.
 
 | ADR | Tema | Status |
 |---|---|---|
@@ -18,3 +18,4 @@ Formato: **Status** (`proposta` → `aceita` → `substituída`), Contexto, Deci
 | [0010](./0010-custo-free-plan.md) | Regra de custo reformulada | **aceita** (2026-10-03) |
 | [0011](./0011-rate-limiting-store.md) | Store do rate limiting | **aceita** (2026-10-03) |
 | [0012](./0012-modelo-de-dados.md) | Modelo de dados relacional | **aceita** (2026-10-03) |
+| [0013](./0013-oauth-direto-e-jwt.md) | OAuth do GitHub direto e JWT próprio | **aceita** (2026-10-04; evidência parcial, o login real fecha na Fase 4) |

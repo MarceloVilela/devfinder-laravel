@@ -55,3 +55,25 @@ it('cumpre o contrato nas descrições em text/html', function (string $uri, str
     ['/v1/description/feed', '/description/feed'],
     ['/v1/description/category', '/description/category'],
 ]);
+
+it('GET /me cumpre o contrato (Dev)', function (): void {
+    $token = app(App\Features\Auth\Support\TokenCodec::class)->issue('dev01');
+    $response = $this->getJson('/v1/me', ['Authorization' => "Bearer {$token}"])->assertOk();
+
+    $this->assertResponseMatchesOpenApiSchema($response, HttpMethod::GET, '/me');
+});
+
+it('GET /me sem token cumpre o contrato do 401', function (): void {
+    $response = $this->getJson('/v1/me')->assertStatus(401);
+
+    $this->assertResponseMatchesOpenApiSchema($response, HttpMethod::GET, '/me');
+});
+
+it('o 429 do login cumpre o contrato', function (): void {
+    foreach (range(1, 10) as $_) {
+        $this->get('/v1/auth/github');
+    }
+    $response = $this->getJson('/v1/auth/github')->assertStatus(429);
+
+    $this->assertResponseMatchesOpenApiSchema($response, HttpMethod::GET, '/auth/github');
+});

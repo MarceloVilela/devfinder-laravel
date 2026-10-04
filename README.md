@@ -26,6 +26,7 @@ scripts/reproduz-ci.sh            # o CI inteiro, em container limpo
 ## Limitações conhecidas (até agora)
 
 - Latência medida no deploy real (`specs/spikes/g1-latencia-deploy-real.md`): quente com banco p95 51 ms; Lambda e Neon frios ≈ 2,2 s; **Lambda frio sem banco 1,64 s, acima da meta de 1,5 s**. O custo medido é o do Cost Explorer, que atrasa horas.
-- **Sem defesa de infraestrutura contra abuso volumétrico**: a conta AWS tem limite de concorrência 10 e não permite concorrência reservada, e a Function URL não tem WAF nem throttling. Sobram o rate limiting da aplicação (Fase 4) e o alarme de custo.
+- **Sem defesa de infraestrutura contra abuso volumétrico**: a conta AWS tem limite de concorrência 10 e não permite concorrência reservada, e a Function URL não tem WAF nem throttling. Sobram o rate limiting da aplicação (só no login, 10 por minuto por IP, store em tabela do Postgres; contagem aproximada sob concorrência) e o alarme de custo.
+- **Autenticação só por Bearer** (JWT HS256 de 7 dias, sem refresh nem revogação). O cookie `httpOnly` de sessão do original está fora do escopo. O token vai na URL do redirect ao front (o contrato manda), com `no-store` e `no-referrer`. `GET /feed/trending?user=` identifica o dev sem token, como o original.
 - O oráculo de paridade (v1) cobre 27 das 30 operações do contrato.
 - O Free Plan da AWS encerra a conta ao expirar; a decisão de fim de vida ainda não foi tomada.

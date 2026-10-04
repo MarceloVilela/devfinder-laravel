@@ -14,7 +14,7 @@ docker run --rm -u "$(id -u):$(id -g)" -e HOME=/tmp -e COMPOSER_HOME=/tmp/compos
 cd "$WORK/repo"
 rm -rf .serverless
 AWS_SHARED_CREDENTIALS_FILE=/dev/null AWS_CONFIG_FILE=/dev/null AWS_ACCESS_KEY_ID= AWS_SECRET_ACCESS_KEY= \
-  npx --yes osls@4.4.0 package --stage prod
+  npx --yes osls@4.4.0 package --stage prod --param="corsOrigins=https://app.example.test" --param="webUrl=https://app.example.test"
 ls -la .serverless/*.zip
 echo "tamanho descompactado: $(unzip -l .serverless/*.zip | tail -1)"
 node scripts/allowlist.cjs .serverless

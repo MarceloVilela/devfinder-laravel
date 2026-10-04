@@ -40,6 +40,22 @@ BODY=$(curl -sS --max-time 30 "$BASE_URL/v1/rota-que-nao-existe-smoke")
 want  "404 no formato do contrato" "$BODY" '{"error":"Not found."}'
 for needle in 'stack' 'trace' '/var/task' 'vendor/' 'Illuminate' '\.php'; do hasnt "erro não contém '$needle'" "$BODY" "$needle"; done
 
+# --- autenticação (Fase 4): sem token 401; login redireciona ao GitHub com state e cookie HttpOnly; token só por cabeçalho
+BODY=$(curl -sS --max-time 30 "$BASE_URL/v1/me")
+want "GET /v1/me sem token dá 401 no formato do contrato" "$BODY" '{"error":"Token not provided."}'
+BODY=$(curl -sS --max-time 30 -H 'Authorization: Bearer garbage.invalid.token' "$BASE_URL/v1/me")
+want "GET /v1/me com token inválido dá 401" "$BODY" '{"error":"Token invalid."}'
+BODY=$(curl -sS --max-time 30 "$BASE_URL/v1/me?token=garbage.invalid.token")
+want "token na query string nunca vale" "$BODY" '{"error":"Token not provided."}'
+R=$(curl -sS -i --max-time 30 "$BASE_URL/v1/auth/github"); CODE=$(printf '%s' "$R" | head -1 | cut -d' ' -f2)
+want "GET /v1/auth/github redireciona (302)" "$CODE" "302"
+has  "redirect vai ao GitHub com state" "$R" '^location: https://github.com/login/oauth/authorize?.*state=[0-9a-f]\{64\}'
+hasnt "redirect não pede scope" "$R" '^location:.*scope='
+has  "cookie do state é HttpOnly e SameSite=Lax" "$R" '^set-cookie: devfinder_oauth_state=.*httponly.*samesite=lax'
+R=$(curl -sS -i --max-time 30 "$BASE_URL/v1/auth/github/callback?code=x&state=0000"); CODE=$(printf '%s' "$R" | head -1 | cut -d' ' -f2)
+want "callback com state inválido volta ao front (302)" "$CODE" "302"
+hasnt "callback com state inválido não entrega token" "$R" '^location:.*token='
+
 # --- /docs serve o contrato
 CODE=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$BASE_URL/docs/openapi.yaml")
 want "GET /docs/openapi.yaml responde 200" "$CODE" "200"
@@ -55,7 +71,7 @@ if [ -n "${FUNCTION_NAME:-}" ]; then
   ENVJSON=$(aws lambda get-function-configuration --region "${AWS_REGION:-us-east-2}" --function-name "$FUNCTION_NAME" --query 'Environment.Variables' --output json)
   want "função: APP_DEBUG=false" "$(printf '%s' "$ENVJSON" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("APP_DEBUG"))')" "false"
   want "função: APP_ENV=production" "$(printf '%s' "$ENVJSON" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("APP_ENV"))')" "production"
-  PLAIN=$(printf '%s' "$ENVJSON" | python3 -c 'import sys,json;d=json.load(sys.stdin);print(",".join(k for k in ("APP_KEY","DB_URL") if not str(d.get(k,"")).startswith("bref-ssm:")))')
+  PLAIN=$(printf '%s' "$ENVJSON" | python3 -c 'import sys,json;d=json.load(sys.stdin);print(",".join(k for k in ("APP_KEY","DB_URL","JWT_SECRET","GITHUB_CLIENT_SECRET") if not str(d.get(k,"")).startswith("bref-ssm:")))')
   want "função: segredos só como bref-ssm: (sem texto)" "$PLAIN" ""
 fi
 
