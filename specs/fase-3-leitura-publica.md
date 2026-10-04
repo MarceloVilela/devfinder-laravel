@@ -1,7 +1,7 @@
 # Fase 3 — Endpoints públicos de leitura
 
 > Referência: [`../plan.md`](../plan.md), seção 7, Fase 3. Branch `fase-3-leitura-publica`, a partir de `main` (PR #5 mergeado).
-> Status: **implementada localmente, aguardando o aceite no deploy real e o PR** (iniciada e implementada em 2026-10-03). Spec antes do código; o aceite se prova em `execucao-fase-3.log`.
+> Status: **concluída** (PR #6 mergeado e aceite no deploy real em 2026-10-03). Spec antes do código; o aceite se prova em `execucao-fase-3.log`.
 > Contrato: [`fase-0-openapi.yaml`](./fase-0-openapi.yaml). Orçamentos de query: [`fase-1-modelo-de-dados.md`](./fase-1-modelo-de-dados.md). Casos: `acceptance/{devs,channels,videos,description,search}.http`.
 
 ## Escopo
@@ -72,8 +72,8 @@ Personalização por token (Fase 4); `GET /feed/subscriptions` e todas as escrit
 
 ## Critério de aceite
 
-- [x] Casos de aceite passam **local** (`execucao-fase-3.log`, seções 2 a 5: as 30 capturas dos `.http` de leitura e os 7 de `search.http`). [ ] **No deploy real**: pendente, depende de autorizar o deploy e o seed do Neon.
+- [x] Casos de aceite passam **local** (`execucao-fase-3.log`, seções 2 a 5: as 30 capturas dos `.http` de leitura e os 7 de `search.http`). [x] **No deploy real** (`execucao-fase-3.log`, seção 7): Neon semeado (35/3/3/55/2/2), `search.http` 7 de 7 e as 30 capturas do G3 iguais ao v1.
 - [x] G3: diff normalizado v1 × `php-laravel` nulo para as rotas 1 a 9 (30 capturas, status e content-type iguais; a 10 é validada contra o contrato). O G3 achou uma lacuna do dataset (`description` e `avatar` dos canais, `thumbnail` dos vídeos), corrigida no seeder e em `dataset-de-paridade.md`.
 - [x] Orçamento de queries respeitado e testado (`QueryBudgetTest`); `preventLazyLoading` ligado.
 - [x] `scripts/ci.sh` verde (Pint, Larastan nível 9, 179 testes Pest com arquitetura e contrato) e reproduzido em container limpo (`scripts/reproduz-ci.sh`, exit 0). [ ] Falta ver o workflow verde no PR.
-- [ ] PR mergeado (ação do usuário).
+- [x] PR #6 mergeado.

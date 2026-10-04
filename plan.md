@@ -31,8 +31,8 @@
 | 0 | Especificação, ADRs, oráculo v1 e critérios de revisão (inclui spike inicial S1–S3) | M | **concluída em conteúdo** (2026-10-03); falta só o PR do `fase-0b-spike` (ver `specs/fase-0-especificacao.md`). Adiados por precisarem de esqueleto: ferramenta de contrato, DTO, teste de arquitetura, UI de `/docs` e ADRs 0005 a 0008 (Fase 2a) e ADR 0004 (Fase 2b) |
 | 1 | Modelo de dados (PostgreSQL) e orçamentos de query | M | **concluída** (PR #3 mergeado em 2026-10-03) |
 | 2a | Esqueleto local: qualidade, CI, teste de arquitetura, erros, `/docs` e `config:check` | M | **concluída** (PR #4 mergeado em 2026-10-03) |
-| 2b | Esqueleto na nuvem: Bref + Neon + deploy + guardrails de custo + spikes S4 a S7 (gate G0) | L | **concluída** (PR #5 mergeado em 2026-10-03): deploy real feito e verificado; pendentes o OIDC de ponta a ponta (o `deploy.yml` ainda não rodou) e a ADR 0004 |
-| 3 | Endpoints públicos de leitura | M | **implementada local, aguardando deploy real e PR** (branch `fase-3-leitura-publica`, `specs/fase-3-leitura-publica.md`): 10 rotas, 179 testes, G3 nulo (30 capturas), orçamento de queries testado; falta o aceite no deploy real |
+| 2b | Esqueleto na nuvem: Bref + Neon + deploy + guardrails de custo + spikes S4 a S7 (gate G0) | L | **concluída** (PR #5 mergeado em 2026-10-03): deploy real feito e verificado; OIDC validado no deploy do PR #6 (2026-10-03; o `sub` imutável exigiu corrigir a confiança da role); pendente a ADR 0004 |
+| 3 | Endpoints públicos de leitura | M | **concluída** (PR #6 mergeado em 2026-10-03; aceite no deploy real em 2026-10-03, `specs/execucao-fase-3.log` seção 7): 10 rotas, 179 testes, G3 nulo local e no deploy real (30 capturas), orçamento de queries testado |
 | 4 | Autenticação (GitHub OAuth + JWT) | M | pendente |
 | 5 | Endpoints autenticados de escrita e relacionamento | M | pendente |
 | 6 | Ingestão em lote (agendada) | M | pendente |

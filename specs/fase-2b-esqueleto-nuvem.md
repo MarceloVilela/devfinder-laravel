@@ -50,14 +50,14 @@ Qualquer rota das 30 do contrato além de `GET /v1` (Fases 3 a 6); rate limiting
 
 - `unaccent`, `pg_trgm` e `uuidv7()` **nunca rodaram no Neon**: a primeira migration real pode falhar. Se falhar, a ADR 0012 tem o critério de reversão.
 - O Free Plan encerra a conta ao expirar (ADR 0010): o `teardown.md` precisa ser executável por quem lê, não por quem escreveu.
-- OIDC mal escopado dá a qualquer workflow do repositório poder de deploy: confiança restrita a `repo:MarceloVilela/devfinder-laravel:ref:refs/heads/main`.
+- OIDC mal escopado dá a qualquer workflow do repositório poder de deploy: confiança restrita a `repo:MarceloVilela@32023347/devfinder-laravel@1402300600:ref:refs/heads/main` (formato imutável do `sub`: o formato antigo `repo:dono/repo:ref:...` foi recusado no primeiro deploy).
 
 ## Critério de aceite
 
 - [x] `osls package` + allowlist (job `package` do `ci.yml`), com 14 testes que provam a reprovação (RDS, NAT, API Gateway, Secrets Manager, log sem retenção, segredo em texto, `APP_DEBUG`, CORS `*`). **O job só rodou localmente**; falta vê-lo verde no PR.
 - [x] CORS, `X-Request-Id`, `APP_DEBUG=false` e erro sem stack trace provados por `scripts/smoke.sh` **contra o deploy real** (21 checagens, `execucao-fase-2b.log`, seção 12). (Provados só na **simulação local de produção**, `scripts/smoke-local-prod.sh`; o `APP_DEBUG` da função viva é conferido pelo smoke via `aws lambda get-function-configuration`.)
-- [ ] Deploy feito pelo `deploy.yml` com OIDC (sem `AWS_ACCESS_KEY_ID` em secret). **Pendente**: o deploy foi feito à mão com credenciais de administrador; a lista exata de recursos criados (9, todos na allowlist) está no log, seção 13.
+- [x] Deploy feito pelo `deploy.yml` com OIDC (sem `AWS_ACCESS_KEY_ID` em secret), **validado em 2026-10-03** no merge do PR #6 (run 37153911494): migrate, `osls deploy` e smoke verdes. A 1ª tentativa falhou (`sts:AssumeRoleWithWebIdentity`) porque o repositório emite `sub` imutável; corrigida a confiança da role, a política de permissões não precisou de ajuste. O 1º deploy (9 recursos, na allowlist) foi à mão, log seção 13.
 - [x] `/health/db` 200 contra o Neon, com migrations aplicadas (extensões testadas: `unaccent`, `pg_trgm`, `uuidv7()`, log seção 9).
 - [x] Orçamento de US$ 1: **já existia** (`Orcamento USD 0,01`, inclui créditos); `scripts/custo.sh` rodou (somente leitura) e `specs/teardown.md` está escrito. [ ] 2º orçamento (consumo bruto) **não criado**: depende de autorização.
-- [x] S6, G0 e G1 com número medido (`spikes/s5-s6-fase-2b.md`, `spikes/g1-latencia-deploy-real.md`). [ ] S5 (OIDC) e ADR 0004 aceita pelo usuário: pendentes.
+- [x] S6, G0 e G1 com número medido (`spikes/s5-s6-fase-2b.md`, `spikes/g1-latencia-deploy-real.md`). [x] S5 (OIDC) validado. [ ] ADR 0004 aceita pelo usuário: pendente.
 - [ ] PR mergeado (ação do usuário).
