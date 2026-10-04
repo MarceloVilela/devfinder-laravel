@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Features\Auth\Actions;
 
-use App\Features\Auth\Integrations\GithubClient;
+use App\Shared\Github\GithubClient;
 
 /** Gera o `state` aleatório (F4-2) e a URL de autorização do GitHub. */
 final class BeginGithubLogin

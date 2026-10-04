@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Features\Auth\Integrations;
+namespace App\Shared\Github;
 
-use App\Features\Auth\Data\GithubProfile;
-use App\Features\Auth\Exceptions\GithubUnavailable;
+use App\Shared\Exceptions\GithubUnavailable;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
@@ -29,6 +28,26 @@ final class HttpGithubClient implements GithubClient
         }
 
         return 'https://github.com/login/oauth/authorize?' . http_build_query($query);
+    }
+
+    public function publicProfile(string $login): ?GithubProfile
+    {
+        try {
+            $response = $this->request()->get('https://api.github.com/users/' . rawurlencode($login));
+        } catch (ConnectionException $e) {
+            throw new GithubUnavailable('github unreachable', $e);
+        }
+
+        if ($response->status() === 404) {
+            return null;
+        }
+
+        // 403 e 429 são o limite da API sem token (60 por hora): é indisponibilidade, não "usuário inexistente".
+        if (! $response->ok()) {
+            throw new GithubUnavailable("github public profile status {$response->status()}");
+        }
+
+        return $this->toProfile($this->json($response));
     }
 
     public function profileFor(string $code): ?GithubProfile
@@ -80,7 +99,12 @@ final class HttpGithubClient implements GithubClient
             throw new GithubUnavailable("github profile status {$response->status()}");
         }
 
-        $body = $this->json($response);
+        return $this->toProfile($this->json($response));
+    }
+
+    /** @param array<string, mixed> $body */
+    private function toProfile(array $body): GithubProfile
+    {
         $login = $body['login'] ?? null;
 
         if (! is_string($login) || $login === '') {

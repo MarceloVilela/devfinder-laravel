@@ -8,6 +8,7 @@ use App\Features\Health\Http\Controllers\ShowHealthController;
 use App\Features\Health\Http\Controllers\ShowHealthDbController;
 use App\Features\Auth\Console\MintToken;
 use App\Features\Auth\Http\Middleware\OptionalAuth;
+use App\Features\Auth\Http\Middleware\RequireAdmin;
 use App\Features\Auth\Http\Middleware\RequireAuth;
 use App\Shared\Console\ConfigCheck;
 use App\Shared\Http\ErrorRenderer;
@@ -17,6 +18,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -35,7 +37,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(AssignRequestId::class);
         $middleware->api(append: [RejectMalformedInput::class]);
-        $middleware->alias(['auth' => RequireAuth::class, 'auth.optional' => OptionalAuth::class]);
+        // O limiter `writes` usa o dev que o `auth` deixou na requisição: `auth` precisa rodar antes do `throttle` (que é prioritário).
+        $middleware->prependToPriorityList(before: ThrottleRequests::class, prepend: RequireAuth::class);
+        $middleware->prependToPriorityList(before: ThrottleRequests::class, prepend: RequireAdmin::class);
+        $middleware->alias(['auth' => RequireAuth::class, 'auth.optional' => OptionalAuth::class, 'admin' => RequireAdmin::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(fn(): bool => true);

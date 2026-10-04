@@ -55,6 +55,27 @@ final class DevQueries
         return $query;
     }
 
+    /**
+     * Devs ativos que `$ownerId` marcou com `$type`, sem ele mesmo, em ordem de id (UUIDv7: a de criação, como o id crescente do v1).
+     * 3 queries.
+     *
+     * @return list<DevView>
+     */
+    public function reactedBy(string $ownerId, string $type): array
+    {
+        $rows = DB::table('devs')
+            ->join('dev_reactions as r', 'r.target_dev_id', '=', 'devs.id')
+            ->whereNull('devs.deleted_at')
+            ->where('r.dev_id', $ownerId)
+            ->where('r.type', $type)
+            ->where('devs.id', '<>', $ownerId)
+            ->orderBy('devs.id')
+            ->get(['devs.id', 'devs.username', 'devs.name', 'devs.bio', 'devs.avatar', 'devs.created_at', 'devs.updated_at'])
+            ->all();
+
+        return $this->hydrate(array_values($rows));
+    }
+
     /** `GET /me`: reações do dev já carregado pelo middleware. 2 queries. */
     public function view(AuthenticatedDev $dev): DevView
     {

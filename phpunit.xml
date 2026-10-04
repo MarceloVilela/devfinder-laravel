@@ -34,14 +34,15 @@
         <env name="APP_ENV" value="testing"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="DB_DATABASE" value="devfinder_test" force="true"/>
-        <env name="CACHE_STORE" value="array"/>
+        <env name="CACHE_STORE" value="array" force="true"/>
+        <env name="CACHE_LIMITER_STORE" value="array" force="true"/>
         <env name="JWT_SECRET" value="testing-secret-with-at-least-32-bytes-0123456789" force="true"/>
         <env name="GITHUB_CLIENT_ID" value="test-client-id" force="true"/>
         <env name="GITHUB_CLIENT_SECRET" value="test-client-secret" force="true"/>
         <env name="GITHUB_REDIRECT_URI" value="" force="true"/>
         <env name="APP_WEB_URL" value="https://app.example.test" force="true"/>
-        <env name="SESSION_DRIVER" value="array"/>
-        <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="SESSION_DRIVER" value="array" force="true"/>
+        <env name="QUEUE_CONNECTION" value="sync" force="true"/>
         <env name="LOG_CHANNEL" value="null" force="true"/>
     </php>
 </phpunit>

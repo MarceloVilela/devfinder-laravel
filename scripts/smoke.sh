@@ -47,14 +47,22 @@ BODY=$(curl -sS --max-time 30 -H 'Authorization: Bearer garbage.invalid.token' "
 want "GET /v1/me com token inválido dá 401" "$BODY" '{"error":"Token invalid."}'
 BODY=$(curl -sS --max-time 30 "$BASE_URL/v1/me?token=garbage.invalid.token")
 want "token na query string nunca vale" "$BODY" '{"error":"Token not provided."}'
+for route in "POST /v1/devs" "POST /v1/channels" "POST /v1/video" "POST /v1/likes/devs/x" "DELETE /v1/dislikes/channels/x" "GET /v1/likes/devs" "GET /v1/feed/subscriptions"; do
+  BODY=$(curl -sS --max-time 30 -X "${route%% *}" -H 'Content-Type: application/json' -d '{}' "$BASE_URL${route#* }")
+  want "${route} sem token dá 401 (Fase 5)" "$BODY" '{"error":"Token not provided."}'
+done
 R=$(curl -sS -i --max-time 30 "$BASE_URL/v1/auth/github"); CODE=$(printf '%s' "$R" | head -1 | cut -d' ' -f2)
 want "GET /v1/auth/github redireciona (302)" "$CODE" "302"
 has  "redirect vai ao GitHub com state" "$R" '^location: https://github.com/login/oauth/authorize?.*state=[0-9a-f]\{64\}'
 hasnt "redirect não pede scope" "$R" '^location:.*scope='
 has  "cookie do state é HttpOnly e SameSite=Lax" "$R" '^set-cookie: devfinder_oauth_state=.*httponly.*samesite=lax'
+R=$(curl -sS -i --max-time 30 -X POST "$BASE_URL/v1/auth/logout"); CODE=$(printf '%s' "$R" | head -1 | cut -d' ' -f2)
+want "POST /v1/auth/logout responde 204" "$CODE" "204"
+has  "logout expira o cookie de sessão httpOnly" "$R" '^set-cookie: devfinder_token=.*httponly'
 R=$(curl -sS -i --max-time 30 "$BASE_URL/v1/auth/github/callback?code=x&state=0000"); CODE=$(printf '%s' "$R" | head -1 | cut -d' ' -f2)
 want "callback com state inválido volta ao front (302)" "$CODE" "302"
 hasnt "callback com state inválido não entrega token" "$R" '^location:.*token='
+hasnt "callback com state inválido não abre sessão" "$R" '^set-cookie: devfinder_token=[^;]'
 
 # --- /docs serve o contrato
 CODE=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$BASE_URL/docs/openapi.yaml")

@@ -1,0 +1,123 @@
+# Execução da Fase 5 — escrita e relacionamentos (2026-10-04)
+# Ambiente local: docker compose (app :8082, PostgreSQL 18), dataset de paridade; v1 local (:8081) recriado com o mesmo dataset. Deploy real: PENDENTE.
+
+## 1. Gates (container limpo, .env do workflow: scripts/reproduz-ci.sh; refeito depois do RBAC)
+==== gera .env do CI (só as chaves que o workflow define)
+==== composer validate --strict
+==== composer install
+==== composer audit
+No security vulnerability advisories found.
+==== chave da aplicação
+==== pint --test
+    PASS   ......................................................... 175 files  
+==== larastan nível 9 (sem baseline)
+ [OK] No errors                                                                 
+==== config:check
+==== migrate e rollback e migrate (reversível)
+==== paridade de rotas: nada registrado fora do contrato
+==== pest (Feature, Contract, Arch)
+  Tests:    412 passed (1952 assertions)
+==================================================
+EXIT=0
+
+## 2. Pacote e allowlist (scripts/reproduz-package.sh)
+-rw-rw-r-- 1 marcelo marcelo 16909922 Oct  4 16:17 .serverless/devfinder-laravel.zip
+allowlist OK (8 tipos permitidos)
+EXIT=0
+
+## 3. Simulação local de produção (scripts/smoke-local-prod.sh), com as checagens novas da Fase 5 (refeita depois do RBAC)
+ok   POST /v1/devs sem token dá 401 (Fase 5)
+ok   POST /v1/channels sem token dá 401 (Fase 5)
+ok   POST /v1/video sem token dá 401 (Fase 5)
+ok   POST /v1/likes/devs/x sem token dá 401 (Fase 5)
+ok   DELETE /v1/dislikes/channels/x sem token dá 401 (Fase 5)
+ok   GET /v1/likes/devs sem token dá 401 (Fase 5)
+ok   GET /v1/feed/subscriptions sem token dá 401 (Fase 5)
+SMOKE OK
+EXIT=0
+
+## 4. G3 de escrita — v1 local x php-laravel local (38 capturas, mesma ordem, bancos recriados antes; refeito depois do RBAC com `update devs set role = 'ADMIN' where username = 'dev01'` no php-laravel)
+# Sequência: specs/tools/capture-g3-write.cjs (reações de dev e de canal, vídeo 400/201/409, canal 201/200/201 com userGithub, dev 401/201/201 com octocat).
+# Fora do diff: POST /devs com username inexistente no GitHub (D-6: 404 aqui, o v1 devolve 500) e GET /feed/subscriptions (o v1 não tem a rota, D-5).
+$ G3_TOKEN=<v1> node specs/tools/capture-g3-write.cjs http://localhost:8081/v1 v1w.json && G3_TOKEN=<laravel> ... http://localhost:8082/v1 lw.json
+IGUAIS após a normalização
+exit=0
+status e content-type iguais nas 38 capturas
+  400 POST /likes/devs/no-such-dev-zzz (dev01)
+  200 POST /likes/devs/dev04 (dev01)
+  200 POST /likes/devs/dev04 (dev01)
+  200 POST /likes/devs/dev01 (dev01)
+  200 GET /likes/devs (dev01)
+  200 DELETE /likes/devs/dev04 (dev01)
+  200 DELETE /likes/devs/dev04 (dev01)
+  200 GET /likes/devs (dev01)
+  400 POST /dislikes/devs/no-such-dev-zzz (dev01)
+  200 POST /dislikes/devs/dev05 (dev01)
+  200 GET /dislikes/devs (dev01)
+  200 DELETE /dislikes/devs/dev05 (dev01)
+  400 POST /likes/channels/no-such-channel-zzz (dev01)
+  200 POST /likes/channels/Canal%20Zeta (dev01)
+  200 DELETE /likes/channels/Canal%20Zeta (dev01)
+  400 POST /dislikes/channels/no-such-channel-zzz (dev01)
+  200 POST /dislikes/channels/Canal%20Zeta (dev01)
+  200 DELETE /dislikes/channels/Canal%20Zeta (dev01)
+  400 POST /video (dev01) {"title":"Video de teste","url":"https://www.youtube.com/wat
+  201 POST /video (dev01) {"title":"Video de teste Fase 5","url":"https://www.youtube.
+  409 POST /video (dev01) {"title":"Video de teste Fase 5 duplicado","url":"https://ww
+  201 POST /channels (dev01) {"link":"https://www.youtube.com/channel/UCFASE5TEST","title
+  200 POST /channels (dev01) {"link":"https://www.youtube.com/channel/UCFASE5TEST","title
+  201 POST /channels (dev01) {"link":"https://www.youtube.com/channel/UCFASE5TEST2","titl
+  401 POST /devs {"username":"dev01"}
+  201 POST /devs (dev01) {"username":"dev01"}
+  201 POST /devs (dev01) {"username":"octocat"}
+  200 POST /likes/channels/Canal%20Beta (dev01)
+  200 GET /devs?page=1
+
+## 5. Casos de aceite no ambiente local (httpyac; token sintético de dev01; GitHub real nos casos com octocat e usuario-inexistente)
+-- reactions.http
+=> 400 (122 ms) => 200 (124 ms) => 200 (85 ms) => 200 (105 ms) => 200 (173 ms) => 400 (87 ms) => 200 (355 ms) => 200 (114 ms) => 200 (367 ms) => 400 (123 ms) => 200 (220 ms) => 200 (316 ms) => 400 (98 ms) => 200 (251 ms) => 200 (143 ms) 15 requests processed (15 succeeded) 
+-- devs.http
+=> 200 (146 ms) => 200 (108 ms) => 200 (121 ms) => 200 (133 ms) => 200 (114 ms) => 200 (96 ms) => 200 (85 ms) => 401 (37 ms) => 201 (168 ms) => 201 (651 ms) => 404 (240 ms) => 422 (198 ms) 12 requests processed (12 succeeded) 
+-- channels.http
+=> 200 (56 ms) => 200 (64 ms) => 200 (68 ms) => 201 (173 ms) => 200 (115 ms) => 201 (245 ms) 7 requests processed (7 succeeded) 
+-- videos.http
+=> 200 (94 ms) => 200 (86 ms) => 200 (63 ms) => 200 (89 ms) => 200 (68 ms) => 200 (68 ms) => 200 (65 ms) => 200 (70 ms) => 200 (79 ms) => 401 (21 ms) => 200 (63 ms) => 200 (63 ms) => 200 (58 ms) => 400 (201 ms) => 201 (358 ms) => 409 (127 ms) 16 requests processed (16 succeeded) 
+
+## 6. Achado de processo: os testes locais rodavam no banco de DESENVOLVIMENTO
+# `docker compose run` injeta o `.env` (`env_file`) em `$_SERVER`; o `<env force="true">` do phpunit.xml só muda `$_ENV` e `getenv()`, e o Laravel
+# lê `$_SERVER` primeiro. Resultado local: `config('database.connections.pgsql.database')` = `devfinder` (e `CACHE_STORE=database`), então o
+# `RefreshDatabase` apagava o banco de desenvolvimento (a regra "nunca apontar para o banco de desenvolvimento" só valia no CI, onde não há `.env`
+# injetado). Descoberto ao contar queries (o limiter gravava na tabela `cache`). Correção: `tests/Pest.php` impõe `DB_DATABASE=devfinder_test`,
+# `CACHE_STORE=array` etc. em `$_SERVER`, `$_ENV` e `putenv` antes de o app subir, e `TestCase::setUp` falha fechado se o banco não for `devfinder_test`.
+# O banco de desenvolvimento é só o seed (`migrate:fresh --seed`), sem perda de dado; foi recriado no fim da Fase 5.
+
+## 7. RBAC mínimo (F5-15, D-15), pedido do usuário em 2026-10-04
+# Coluna `devs.role` (ENUM `dev_role`, padrão `USER`), migration `2026_10_04_100000_add_role_to_devs_table` (reversível: migrate/rollback/migrate no CI).
+# `POST /channels` e `POST /video` exigem ADMIN; USER recebe 403 {"error":"Forbidden."} antes de validar, gravar ou gastar o limiter.
+# Local, token de dev01 ainda USER:  POST /v1/channels -> {"error":"Forbidden."} [403];  POST /v1/video -> {"error":"Forbidden."} [403]
+# Depois do `update devs set role = 'ADMIN' where username = 'dev01'` o mesmo token passa: o G3 de escrita (seção 4) dá "IGUAIS" nas 38 capturas.
+# Testes novos (`tests/Feature/Write/RoleTest.php`, 12): default USER (login, POST /devs e userGithub), 403 sem gravar nem chamar o GitHub,
+# 403 antes do 422, ADMIN cria e atualiza, 401 antes do 403, promover e rebaixar valem com o mesmo token, papel por dev e não por token,
+# reações e POST /devs abertos a USER, papel fora do JSON, ENUM rejeita SUPERUSER e admin, 403 não gasta o limiter, ADMIN segue com limite.
+# Produção: depois do deploy, definir o ADMIN direto no Neon (URL direta): update devs set role = 'ADMIN' where username = '<seu login>';
+
+## 8. Sessão por cookie para o devfinder-next atual (F4-13, D-16), pedido do usuário em 2026-10-04
+# O front v4 só tem sessão por cookie httpOnly emitido pelo backend (axios `/backend` com `withCredentials`, rewrite do Next para a API,
+# logout em `POST /auth/logout`). Mudanças: callback abre `Set-Cookie: devfinder_token` e redireciona a `${APP_WEB_URL}/login` sem token na URL;
+# `POST /auth/logout` (204); middleware lê cookie primeiro e Bearer depois (ordem do devfinder-api); cookie HttpOnly, SameSite=Lax, 7 dias.
+# Gates depois da mudança (reproduz-ci.sh, container limpo): 
+#     PASS   ......................................................... 179 files  
+#  [OK] No errors                                                                 
+#   Tests:    429 passed (2028 assertions)
+# EXIT=0
+# smoke-local-prod: ok   POST /v1/auth/logout responde 204
+# smoke-local-prod: ok   logout expira o cookie de sessão httpOnly
+# smoke-local-prod: ok   callback com state inválido não abre sessão
+# smoke-local-prod: SMOKE OK
+# smoke-local-prod: EXIT=0
+# Pelo proxy do front (Next dev em :3000, rewrite /backend/* -> API :8082), token sintético de dev01 no Cookie (valor não registrado):
+# GET  /backend/me                  sem cookie -> 401;  com cookie -> 200
+# GET  /backend/feed/subscriptions  com cookie -> total 20
+# GET  /backend/feed/trending       com cookie -> total 20 (anônimo: 55)
+# POST /backend/auth/logout         -> 204, cookie limpo (Max-Age=0, path=/, httponly, samesite=lax)
+# Login real pelo GitHub: pendente (o .env local ainda tem as credenciais do OAuth App laravel-aws; para localhost usar as do laravel-local).

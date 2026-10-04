@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Features\Auth\Support\TokenCodec;
 use Database\Seeders\ParityDatasetSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -10,12 +9,6 @@ use Illuminate\Support\Facades\DB;
 uses(RefreshDatabase::class);
 
 beforeEach(fn() => $this->seed(ParityDatasetSeeder::class));
-
-/** @return array<string, string> */
-function as_dev(string $username): array
-{
-    return ['Authorization' => 'Bearer ' . app(TokenCodec::class)->issue($username)];
-}
 
 it('GET /devs autenticado tira o próprio dev e quem recebeu like ou dislike (dev01: 35 - 3 = 32)', function (): void {
     $json = $this->getJson('/v1/devs', as_dev('dev01'))->assertOk()->json();

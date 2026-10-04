@@ -28,4 +28,26 @@ final readonly class DevView
         public CarbonImmutable $createdAt,
         public CarbonImmutable $updatedAt,
     ) {}
+
+    /**
+     * Schema `Dev` do contrato (fonte única: o `DevResource` e as respostas de outras features usam este método).
+     *
+     * @return array<string, mixed>
+     */
+    public function toContract(): array
+    {
+        return [
+            '_id' => $this->id,
+            'name' => $this->name,
+            'user' => $this->username,
+            'bio' => $this->bio,
+            'avatar' => $this->avatar,
+            'likes' => $this->likes,
+            'deslikes' => $this->dislikes,
+            'follow' => $this->follow,
+            'ignore' => $this->ignore,
+            'createdAt' => $this->createdAt->toIso8601String(),
+            'updatedAt' => $this->updatedAt->toIso8601String(),
+        ];
+    }
 }

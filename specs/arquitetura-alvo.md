@@ -12,7 +12,7 @@ app/
 routes/api.php   rota → Controller, prefixo /v1
 ```
 
-Regras (verificadas por teste de arquitetura, gate G4): `Http → Actions → Models/Queries`; controller não toca
+Regras (verificadas por teste de arquitetura, gate G4; uma feature usa `Actions` e `Data` de outra, nunca `Queries`, `Models`, `Http`, `Support`, `Console` nem `Exceptions`): `Http → Actions → Models/Queries`; controller não toca
 Eloquent (exceto `Queries/` em leitura sem regra), cliente HTTP nem `new` de classe de domínio; `Shared` não
 importa feature; uma feature usa outra só por Actions e Data; integração externa atrás de interface;
 facades só nas bordas; `env()` só em `config/`.

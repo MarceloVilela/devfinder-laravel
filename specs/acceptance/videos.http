@@ -75,6 +75,9 @@ GET {{baseUrl}}/video/vidalpha01
 # Esperado: 200 (não 404) + corpo `null` — paridade com `Video.findOne` do Mongo original.
 GET {{baseUrl}}/video/does-not-exist
 
+# php-laravel (F5-15): `POST /channels` e `POST /video` exigem papel ADMIN. Antes de rodar com o token de dev01:
+#   update devs set role = 'ADMIN' where username = 'dev01';   (sem isso: 403 {"error":"Forbidden."})
+
 ### POST /video — canal desconhecido
 # Confirmado: 400, payload de erro completo (errorMessage/title/url/channel/channel_url/
 # thumbnail) — paridade com `VideoController.store` original.

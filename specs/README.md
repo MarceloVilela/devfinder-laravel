@@ -21,4 +21,5 @@ Metodologia: ver [`../plan.md`](../plan.md). Spec antes do código; um PR por fa
 | [`fase-2b-esqueleto-nuvem.md`](./fase-2b-esqueleto-nuvem.md) | spec da Fase 2b; evidência local em `execucao-fase-2b.log` e `spikes/s5-s6-fase-2b.md`; `teardown.md` (rascunho) e `iam/` (política da role de deploy, **ainda não validada por deploy**) |
 | [`fase-3-leitura-publica.md`](./fase-3-leitura-publica.md) | spec da Fase 3 (decisões F3-1 a F3-10); evidência local em `execucao-fase-3.log`; G3 nulo nas rotas 1 a 9 |
 | [`fase-4-autenticacao.md`](./fase-4-autenticacao.md) | spec da Fase 4 (decisões F4-1 a F4-12); ADR 0013 **aceita** (2026-10-04); divergências D-12 e D-13 aprovadas (2026-10-04); evidência local em `execucao-fase-4.log` |
-| `fase-5-*.md` em diante | não escritos |
+| [`fase-5-escrita.md`](./fase-5-escrita.md) | spec da Fase 5 (decisões F5-1 a F5-14; F5-1 e F5-2 são do usuário); divergência D-14 proposta; evidência local em `execucao-fase-5.log` |
+| `fase-6-*.md` em diante | não escritos |

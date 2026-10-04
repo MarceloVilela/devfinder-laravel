@@ -32,6 +32,9 @@ GET {{baseUrl}}/channels/nao-existe
 # dia precisar buscar por link de verdade, o jeito correto é `?link=` como query string, não
 # path — não implementado porque não há uso real hoje.
 
+# php-laravel (F5-15): `POST /channels` e `POST /video` exigem papel ADMIN. Antes de rodar com o token de dev01:
+#   update devs set role = 'ADMIN' where username = 'dev01';   (sem isso: 403 {"error":"Forbidden."})
+
 ### POST /channels — canal novo, category com emoji (achado: emoji removido, espaço mantido)
 # Confirmado: 201. `category` volta como "Fase5 Design " (emoji `🎨` removido — tradução
 # fiel do regex JS original pro PCRE, ver `strip_channel_emoji()`; o espaço à direita NÃO é

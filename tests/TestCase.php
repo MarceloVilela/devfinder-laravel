@@ -12,6 +12,11 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
+        // Fail-closed: o `RefreshDatabase` apaga tudo; nunca no banco de desenvolvimento.
+        if (config('database.connections.pgsql.database') !== 'devfinder_test') {
+            throw new \RuntimeException('Os testes só rodam no banco devfinder_test (veio ' . var_export(config('database.connections.pgsql.database'), true) . ').');
+        }
+
         // Fixos aqui, não só no phpunit.xml: um `.env` local com as mesmas chaves não pode mudar o resultado dos testes.
         config([
             'logging.default' => 'null',

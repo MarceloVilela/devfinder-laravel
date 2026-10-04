@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Features\Auth\Queries;
 
 use App\Shared\Auth\AuthenticatedDev;
+use App\Shared\Auth\DevRole;
 use App\Shared\Support\NormText;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,7 @@ final class DevLookup
         $row = DB::table('devs')
             ->whereNull('deleted_at')
             ->whereRaw(NormText::equals('username'), [$username])
-            ->first(['id', 'username', 'name', 'bio', 'avatar', 'created_at', 'updated_at']);
+            ->first(['id', 'username', 'name', 'bio', 'avatar', 'role', 'created_at', 'updated_at']);
 
         if ($row === null) {
             return null;
@@ -31,6 +32,7 @@ final class DevLookup
             avatar: self::str($row->avatar),
             createdAt: CarbonImmutable::parse(self::str($row->created_at))->utc(),
             updatedAt: CarbonImmutable::parse(self::str($row->updated_at))->utc(),
+            role: DevRole::tryFrom(self::str($row->role)) ?? DevRole::User,
         );
     }
 

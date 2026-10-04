@@ -18,3 +18,9 @@
   Sem revogação nem refresh: o token vale 7 dias, a menos que o segredo mude. O cookie `httpOnly` de sessão do original segue fora do escopo (A4).
   `?user=` em `GET /feed/trending` identifica o dev sem token (paridade com o original) e deixa qualquer um ver o feed personalizado de qualquer dev.
 - **Critério de reversão**: falha de segurança na lib ou necessidade de revogar tokens: sessão em tabela ou tokens opacos com lista de revogação, por nova ADR.
+
+## Adendo (2026-10-04): sessão por cookie para o front atual
+- O `devfinder-next` v4 só tem sessão por **cookie `httpOnly`** emitido pelo backend (o fluxo `?token=` foi descontinuado nele). A decisão 3 passa a ser: o callback emite o JWT em `Set-Cookie: devfinder_token` (`HttpOnly`, `SameSite=Lax`, 7 dias, `Secure` em produção) e redireciona a `${APP_WEB_URL}/login` **sem token na URL**; `POST /auth/logout` limpa o cookie. O middleware lê **cookie primeiro, Bearer depois**.
+- Isso elimina o limite "token na URL do redirect". Os demais limites seguem (sem refresh nem revogação).
+- Riscos novos e mitigação: CSRF (cookie), mitigado por `SameSite=Lax`, JSON com preflight e CORS sem credenciais; o navegador só fala com a API pelo proxy `/backend` do front.
+- Em produção o cookie só chega ao domínio do front se o **login e o callback passarem pelo proxy** (`GITHUB_REDIRECT_URI=https://<front>/backend/auth/github/callback` e o link de login do front em `/backend/auth/github`): o `state` e a sessão são cookies do host que respondeu. Localmente, `localhost` compartilha cookie entre portas e funciona direto.
