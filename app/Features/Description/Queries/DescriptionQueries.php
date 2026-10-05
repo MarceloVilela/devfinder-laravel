@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Features\Description\Queries;
 
+use App\Shared\Support\NormText;
 use Illuminate\Support\Facades\DB;
 use stdClass;
 
@@ -44,8 +45,8 @@ final class DescriptionQueries
     {
         $rows = DB::table('channels')
             ->whereNull('deleted_at')
-            ->orderBy('category')
-            ->orderByRaw('norm_text(name)')
+            ->orderByRaw(NormText::sortKey('category'))
+            ->orderByRaw(NormText::sortKey('name'))
             ->orderBy('id')
             ->get(['id', 'name', 'category'])
             ->all();
@@ -84,7 +85,8 @@ final class DescriptionQueries
             ->join('tags', 'tags.id', '=', 'channel_tag.tag_id')
             ->whereNull('tags.deleted_at')
             ->whereIn('channel_tag.channel_id', array_keys($names))
-            ->orderBy('tags.name')
+            ->orderByRaw(NormText::sortKey('tags.name'))
+            ->orderByRaw(NormText::tieBreak('tags.name'))
             ->get(['channel_tag.channel_id', 'tags.name']);
 
         foreach ($rows as $row) {

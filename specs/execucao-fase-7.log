@@ -1,0 +1,29 @@
+# Execução da Fase 7 — 2026-10-05 (sem segredos; host da Function URL omitido)
+
+## 1. Suíte, qualidade e CI limpo
+No security vulnerability advisories found.
+    PASS   ......................................................... 197 files  
+ [OK] No errors                                                                 
+  Tests:    492 passed (2289 assertions)
+EXIT=0
+
+## 2. Pacote (osls package + allowlist + php.ini no pacote)
+allowlist OK (9 tipos permitidos)
+EXIT=0
+
+## 3. G3a v1 x php-laravel local, dados reais (186 canais, 500 vídeos)
+IGUAIS após a normalização
+
+## 4. e2e de fumaça no deploy real (httpyac, só GET/401/403; contagem por status)
+app 1x200 | devs 7x200 5x401 | channels 3x200 3x401 | videos 11x200 5x401 | description 2x200 | search 5x200 2x422 | reactions 15x401 | auth 1x204 3x302 6x401 | ingestion 4x401
+
+## 5. Custo (scripts/custo.sh)
+Orcamento USD 0,01	1.0	0.0
+devfinder-laravel-consumo-bruto	1.0	0.041
+devfinder-laravel-prod	UPDATE_COMPLETE
+/aws/lambda/devfinder-laravel-prod-refresh	7	0
+/aws/lambda/devfinder-laravel-prod-web	7	30796
+Invocations: 311.0
+ConcurrentExecutions: 8.0
+
+## 6. Cold start e carga: ver specs/spikes/cold-start-publicado.md

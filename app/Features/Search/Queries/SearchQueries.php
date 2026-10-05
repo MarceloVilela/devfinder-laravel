@@ -18,7 +18,7 @@ final class SearchQueries
         $rows = DB::table('channels')
             ->whereNull('deleted_at')
             ->whereRaw('(' . NormText::like('name') . ' or ' . NormText::like('link') . ')', [$pattern, $pattern])
-            ->orderByRaw('norm_text(name)')
+            ->orderByRaw(NormText::sortKey('name'))
             ->orderBy('id')
             ->limit($limit)
             ->get(['name'])

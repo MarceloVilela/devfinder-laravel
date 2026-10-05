@@ -11,7 +11,10 @@
 //  - `page` e `totalPages` somem (só existem no php-laravel, D-11);
 //  - `createdAt` e `updatedAt` somem (o v1 usa `+00:00`; o instante já é coberto pela ordem das listas);
 //  - chaves de objeto em ordem alfabética (a ordem de chaves não faz parte do contrato);
-//  - arrays de ids de reação (`likes`, `deslikes`, `follow`, `ignore`) em ordem alfabética (são conjuntos).
+//  - arrays de ids de reação (`likes`, `deslikes`, `follow`, `ignore`) em ordem alfabética (são conjuntos);
+//  - `tags` de um canal comparadas sem caixa e sem acento, em ordem: o `tags.name` do v1 é `_ai_ci`, então `Mobile` e `mobile` (ou `segurança` e
+//    `seguranca`) viram UMA tag e o canal herda a grafia do primeiro que a criou; o php-laravel (e o original, em Mongo) guarda a grafia de cada canal. É diferença do v1 (divergência D-18),
+//    não do php-laravel; o conjunto de tags sem caixa precisa ser o mesmo.
 // Ordem de listas de itens (feed, páginas) é preservada: ela É contrato.
 //
 // Uso: node normalize-g3.cjs <capturas.json>            imprime o JSON normalizado
@@ -71,6 +74,7 @@ function normalizeValue(v, reg) {
     if (k === '_id' && kind) out[k] = lookup(reg, kind, val);
     else if (k === 'channel_id' && kind === 'video') out[k] = lookup(reg, 'channel', val);
     else if (fields[k] && Array.isArray(val)) out[k] = val.map((id) => lookup(reg, fields[k], id)).sort();
+    else if (k === 'tags' && kind === 'channel' && Array.isArray(val)) out[k] = val.map((t) => String(t).normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()).sort();
     else out[k] = normalizeValue(val, reg);
   }
   return out;

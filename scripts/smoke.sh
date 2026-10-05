@@ -16,6 +16,9 @@ hasnt(){ printf '%s' "$2" | grep -q -i -- "$3" && fail "$1 (achei '$3')" || ok "
 R=$(curl -sS -i --max-time 30 "$BASE_URL/health"); CODE=$(printf '%s' "$R" | head -1 | cut -d' ' -f2)
 want "GET /health responde 200" "$CODE" "200"
 has  "resposta tem X-Request-Id" "$R" '^x-request-id: [A-Za-z0-9._-]\{8,\}'
+has  "cabeçalho X-Content-Type-Options: nosniff" "$R" '^x-content-type-options: nosniff'
+has  "cabeçalho Referrer-Policy: no-referrer" "$R" '^referrer-policy: no-referrer'
+hasnt "não anuncia a versão do PHP (X-Powered-By)" "$R" '^x-powered-by:'
 
 B=$(curl -sS --max-time 30 "$BASE_URL/v1")
 want "GET /v1 devolve o AppInfo do contrato" "$B" '{"appname":"DevFinder"}'

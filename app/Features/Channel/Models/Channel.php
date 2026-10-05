@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Features\Channel\Models;
 
+use App\Shared\Support\NormText;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -35,7 +36,7 @@ final class Channel extends Model
     /** @return BelongsToMany<Tag, $this> */
     public function tags(): BelongsToMany
     {
-        return $this->belongsToMany(Tag::class, 'channel_tag')->orderBy('tags.name');
+        return $this->belongsToMany(Tag::class, 'channel_tag')->orderByRaw(NormText::sortKey('tags.name'))->orderByRaw(NormText::tieBreak('tags.name'));
     }
 
     /** @return array<string, string> */

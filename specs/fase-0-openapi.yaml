@@ -17,13 +17,10 @@ info:
     aqui, e qualquer discrepância encontrada durante a implementação deve ser corrigida aqui
     primeiro.
 servers:
+  - url: https://qok5snux35h2vknvwnvqnmuspi0cizuk.lambda-url.us-east-2.on.aws/v1
+    description: Produção (AWS Lambda Function URL, Bref)
   - url: http://localhost:8082/v1
     description: Local (`php-laravel`; porta provisória, fixada na Fase 2a)
-  - url: https://TBD.exemplo.com/v1
-    description: >
-      Deploy real (Lambda Function URL) — URL placeholder até a Fase 2b (ver ../plan.md).
-  - url: https://api2-devfinder.herokuapp.com/v1
-    description: Origem atual (Heroku, devfinder-api), referência de comportamento
 
 tags:
   - name: Dev
