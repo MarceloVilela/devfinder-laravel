@@ -71,3 +71,32 @@ status e content-type iguais nas 9 capturas
 #
 ## 7. Pendente para fechar a fase
 # - Merge (o deploy.yml cria a função refresh e a regra) e a prova da execução agendada no CloudWatch (/aws/lambda/devfinder-laravel-prod-refresh).
+
+## 8. Deploy pelo OIDC depois do merge do PR #10 (2026-10-04)
+# 1ª tentativa (run 37241944886): falhou em `osls deploy`, CREATE_FAILED RefreshLambdaFunction: a role de deploy não podia `lambda:GetLayerVersion`
+#   em arn:aws:lambda:us-east-2:873528684822:layer:php-84:23. O statement CamadasDoBref só cobria a conta 534081306603 (camadas antigas do Bref); o Bref v3 publica
+#   em 873528684822. A pilha voltou a UPDATE_ROLLBACK_COMPLETE e o web seguiu respondendo (200): o deploy falhou fechado.
+# Correção (autorizada como extensão do IAM da Fase 6): CamadasDoBref passa a listar as duas contas (specs/iam/deploy-role.json) e a política foi reaplicada.
+# Rerun do job (gh run rerun --failed): deploy verde (guard do SSM, migrate, osls deploy e smoke).
+# Conferência read-only na conta:
+#   função devfinder-laravel-prod-refresh: runtime provided.al2023 (php-84-console), 300 s, 1024 MB, camada php-84:23, JSONBIN_API_KEY e JSONBIN_ID_SUBS como bref-ssm:
+#   função web: nenhuma variável JSONBIN
+#   regra devfinder-laravel-prod-RefreshEventsRuleSchedule1-<id>: rate(12 hours), ENABLED, entrada "video:refresh"
+#   log groups /aws/lambda/devfinder-laravel-prod-{web,refresh}: retenção 7 dias
+#   pilha: 1 Events::Rule, 2 Lambda::Function, 2 Logs::LogGroup, 3 Lambda::Permission, 1 Lambda::Url, 2 Lambda::Version, 1 IAM::Role, S3 Bucket e BucketPolicy (todos na allowlist)
+# Falta: a prova da execução agendada no CloudWatch (1ª execução em até 12 h, ou disparo manual com autorização) e a idempotência da 2ª execução.
+
+## 9. Execução da função refresh em produção, disparo manual (2026-10-04, autorizado pelo usuário)
+# Bin real do JSONBin (mesmo bin do original), Neon de produção. Disparo: aws lambda invoke --function-name devfinder-laravel-prod-refresh --payload '"video:refresh"'
+# 1ª execução (23:59 UTC): StatusCode 200, sem FunctionError, exitCode 0
+#   JSONBin: 50 candidato(s) encontrado(s).
+#   Adicionados: 39 | Já existiam: 2 | Erros: 9      (9 erros: canais sem cadastro, "Academia do Código" 8x e "Mario Souto - Dev Soutinho" 1x)
+#   CloudWatch: {"message":"video:refresh","context":{"candidates":50,"added":39,"found":2,"errors":9},"channel":"production"}
+#   REPORT: Init Duration 1234,75 ms (cold start do php-84-console), Duration 2174,74 ms, Billed 3410 ms, 148 MB de 1024 MB
+# 2ª execução (idempotência): StatusCode 200, exitCode 0
+#   JSONBin: 50 candidato(s) encontrado(s).
+#   Adicionados: 0 | Já existiam: 41 | Erros: 9        (41 = 39 + 2: tudo o que a 1ª gravou e o que já existia)
+#   REPORT: Duration 658,92 ms, 148 MB
+# Conferido pela Function URL: /v1/feed/trending total 539 (500 + 39), mais recente "Jev: O Novo Hype da IA para Devs..." do Código Fonte TV; /v1/search?q=codex acha 2.
+# Ainda falta: a execução disparada PELA REGRA (a primeira vem em até 12 h de 23:03 UTC); o disparo manual prova a função, o JSONBin real, a gravação e a idempotência.
+# Os 9 erros não são falha: são candidatos de canais que não estão no banco (o dump é mais antigo que o bin). Cadastrar o canal (POST /channels, ADMIN) e rodar de novo os grava.
