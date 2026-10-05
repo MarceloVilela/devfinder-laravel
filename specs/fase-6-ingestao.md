@@ -79,6 +79,6 @@ CloudWatch (log da função `refresh` com o resumo), não "acho que disparou".
 - [x] Testes (474), Pint, Larastan nível 9 e CI em container limpo verdes; idempotência e orçamento de queries provados (`execucao-fase-6.log`, seção 1). [ ] Falta ver o workflow verde no PR.
 - [x] Resumo no mesmo formato e números iguais aos do v1 para a mesma fixture (G3, via `POST /video/refresh`): 9 capturas iguais (seção 4).
 - [x] `POST /video/refresh` e `video:refresh` passam local; `video:refresh --fixture` roda no container (seção 5).
-- [ ] Execução **agendada** comprovada no CloudWatch no deploy real; reexecução idempotente.
+- [x] Função `refresh` em produção com o bin real, disparada à mão: 50 candidatos, 39 adicionados, 2 já existiam, 9 erros (canais sem cadastro); **reexecução idempotente** (0 adicionados, 41 encontrados) (`execucao-fase-6.log`, seção 9). [ ] Falta a execução **disparada pela regra** do EventBridge, comprovada no CloudWatch.
 - [ ] ADR 0014 e divergência D-17 aprovadas. [x] Allowlist atualizada (`AWS::Events::Rule`, com testes) e política da role no `deploy-role.json`; [x] política aplicada na conta em 2026-10-04 (`RegraAgendadaDaIngestao`, conferida com `get-role-policy`) e os dois parâmetros do SSM criados.
 - [ ] PR mergeado.
