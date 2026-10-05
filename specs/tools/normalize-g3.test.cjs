@@ -81,3 +81,13 @@ test('id sem chave natural falha alto, não em silêncio', () => {
   orfao[0].body.docs[0].follow = [UUID(999)];
   assert.throws(() => normalize(orfao), /sem chave natural/);
 });
+
+test('tags de canal: caixa e acento não contam (o tags.name do v1 é _ai_ci e une Mobile e mobile, segurança e seguranca), o conjunto sim', () => {
+  const channel = (tags) => ({ _id: 1, name: 'C', link: 'l', category: 'x', tags });
+  const n = (tags) => normalize([{ name: 'GET /channels', status: 200, body: [channel(tags)] }]);
+
+  assert.equal(firstDifference(n(['arduino', 'FPGA', 'Mobile']), n(['fpga', 'mobile', 'arduino'])), null);
+  assert.equal(firstDifference(n(['segurança e hacking', 'Mobile']), n(['mobile', 'seguranca e hacking'])), null);
+  assert.notEqual(firstDifference(n(['arduino', 'FPGA', 'Mobile']), n(['arduino', 'FPGA', 'outra'])), null);
+  assert.notEqual(firstDifference(n(['arduino', 'FPGA']), n(['arduino', 'FPGA', 'Mobile'])), null);
+});

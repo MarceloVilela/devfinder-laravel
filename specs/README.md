@@ -23,4 +23,5 @@ Metodologia: ver [`../plan.md`](../plan.md). Spec antes do código; um PR por fa
 | [`fase-4-autenticacao.md`](./fase-4-autenticacao.md) | spec da Fase 4 (decisões F4-1 a F4-12); ADR 0013 **aceita** (2026-10-04); divergências D-12 e D-13 aprovadas (2026-10-04); evidência local em `execucao-fase-4.log` |
 | [`fase-5-escrita.md`](./fase-5-escrita.md) | spec da Fase 5 (decisões F5-1 a F5-14; F5-1 e F5-2 são do usuário); divergência D-14 proposta; evidência local em `execucao-fase-5.log` |
 | [`fase-6-ingestao.md`](./fase-6-ingestao.md) | spec da Fase 6 (decisões F6-1 a F6-11); ADR 0014 `proposta`; divergência D-17 proposta; evidência local em `execucao-fase-6.log` |
+| [`fase-7-verificacao.md`](./fase-7-verificacao.md) | spec da Fase 7; [`seguranca-owasp-api.md`](./seguranca-owasp-api.md), [`spikes/cold-start-publicado.md`](./spikes/cold-start-publicado.md); divergência D-18; evidência em `execucao-fase-7.log` |
 | `fase-7-*.md` em diante | não escritos |

@@ -71,3 +71,7 @@ jobs:
           node-version: '24'
       - name: Normalizador do G3
         run: node --test specs/tools/normalize-g3.test.cjs
+      - name: Testes da varredura de segredos
+        run: node --test scripts/scan-secrets.test.cjs
+      - name: Varredura de segredos nos arquivos versionados
+        run: node scripts/scan-secrets.cjs .

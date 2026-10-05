@@ -17,7 +17,7 @@ final class ChannelQueries
      */
     public function all(): Collection
     {
-        return Channel::query()->with('tags')->orderByRaw('norm_text(name)')->orderBy('id')->get();
+        return Channel::query()->with('tags')->orderByRaw(NormText::sortKey('name'))->orderBy('id')->get();
     }
 
     /** Canal ativo com as tags (para a resposta de `POST /channels`). 2 queries. */

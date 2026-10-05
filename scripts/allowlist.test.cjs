@@ -29,8 +29,8 @@ test('Secrets Manager é reprovado', () => assert.match(run((t) => { t.Resources
 test('log group sem retenção é reprovado', () => assert.match(run((t) => { delete t.Resources.Logs.Properties.RetentionInDays; })[0], /retenção/));
 test('log group com retenção longa é reprovado', () => assert.match(run((t) => { t.Resources.Logs.Properties.RetentionInDays = 365; })[0], /retenção/));
 test('APP_KEY em texto é reprovada', () => assert.match(run((t) => { t.Resources.Fn.Properties.Environment.Variables.APP_KEY = 'base64:abc'; })[0], /APP_KEY/));
-test('URL de banco com senha em texto é reprovada', () => assert.match(run((t) => { t.Resources.Fn.Properties.Environment.Variables.DB_URL = 'postgres://u:senha@h/db'; })[0], /DB_URL/));
-test('chave AWS em texto é reprovada', () => assert.match(run((t) => { t.Resources.Fn.Properties.Environment.Variables.X = 'AKIAABCDEFGHIJKLMNOP'; })[0], /chave de acesso/));
+test('URL de banco com senha em texto é reprovada', () => assert.match(run((t) => { t.Resources.Fn.Properties.Environment.Variables.DB_URL = 'postgres://u:senha@h/db'; })[0], /DB_URL/)); // scan-secrets:allow (segredo falso de propósito)
+test('chave AWS em texto é reprovada', () => assert.match(run((t) => { t.Resources.Fn.Properties.Environment.Variables.X = 'AKIAABCDEFGHIJKLMNOP'; })[0], /chave de acesso/)); // scan-secrets:allow (segredo falso de propósito)
 test('sem templates é reprovado', () => assert.match(check(fs.mkdtempSync(path.join(os.tmpdir(), 'allow-')))[0], /nenhum template/));
 test('APP_DEBUG ligado é reprovado', () => assert.match(run((t) => { t.Resources.Fn.Properties.Environment.Variables.APP_DEBUG = 'true'; })[0], /APP_DEBUG/));
 test('APP_ENV diferente de production é reprovado', () => assert.match(run((t) => { t.Resources.Fn.Properties.Environment.Variables.APP_ENV = 'local'; })[0], /APP_ENV/));

@@ -14,6 +14,7 @@ use App\Features\Auth\Http\Middleware\RequireAuth;
 use App\Shared\Console\ConfigCheck;
 use App\Shared\Http\ErrorRenderer;
 use App\Shared\Http\Middleware\AssignRequestId;
+use App\Shared\Http\Middleware\SecurityHeaders;
 use App\Shared\Http\Middleware\RejectMalformedInput;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -37,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withCommands([ConfigCheck::class, MintToken::class, RefreshVideos::class])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(AssignRequestId::class);
+        $middleware->append(SecurityHeaders::class);
         $middleware->api(append: [RejectMalformedInput::class]);
         // O limiter `writes` usa o dev que o `auth` deixou na requisição: `auth` precisa rodar antes do `throttle` (que é prioritário).
         $middleware->prependToPriorityList(before: ThrottleRequests::class, prepend: RequireAuth::class);
